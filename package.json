@@ -1,0 +1,24 @@
+{
+  "name": "arm.js",
+  "version": "0.0.0",
+  "description": "",
+  "main": "index.js",
+  "dependencies": {
+    "johnny-five": "^0.8.38",
+    "serialport": "^1.4.9"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/arm/arm.js.git"
+  },
+  "author": "Michael Yang and Danny Lu",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/arm/arm.js/issues"
+  },
+  "homepage": "https://github.com/arm/arm.js"
+}
