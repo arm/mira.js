@@ -5,6 +5,7 @@
   "main": "index.js",
   "dependencies": {
     "johnny-five": "^0.8.38",
+    "leapjs": "^0.6.4",
     "serialport": "^1.4.9"
   },
   "devDependencies": {},

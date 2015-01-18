@@ -28,9 +28,12 @@ Arm.prototype = (function() {
 })();
 
 var board = new five.Board({
-	repl: false
+	// repl: false
 });
 
 board.on('ready', function() {
+	this.repl.inject({
+		servo: new five.Servo(13)
+	});
 	var arm = Arm(this);
 });
