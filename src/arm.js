@@ -1,6 +1,7 @@
 var five = require('johnny-five');
+var Leap = require('leapjs');
 
-function Arm(board) {
+var Arm = function(board) {
 	this.board = board;
 
 	var servoPins = {
@@ -24,16 +25,14 @@ function Arm(board) {
 
 Arm.prototype = (function() {
 	var arm = new Object();
+
 	return arm;
 })();
 
 var board = new five.Board({
-	// repl: false
+	repl: false
 });
 
 board.on('ready', function() {
-	this.repl.inject({
-		servo: new five.Servo(13)
-	});
 	var arm = Arm(this);
 });
