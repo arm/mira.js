@@ -39,19 +39,23 @@ Arm.prototype = (function() {
 
 	arm.setPinch = function(value) { // 0.0 (open) - 1.0 (closed)
 		var bounds = servoBounds['pinch']; 
-		this.setServo('pinch', scale(value, bounds.open, bounds.closed));
+		this.setServo('pinch', this.scale(value, bounds.open, bounds.closed));
 	}
 
 	arm.setRoll = function(value) { // 0.0 (palm left) - 1.0 (palm right)
 
 	}
 
-	arm.setPitch = function(value) {
+	arm.setPitch = function(value) { // 0.0 (pointing down) - 1.0 (up)
 
 	}
 
 	function scale(value, min, max) { // value from 0.0 - 1.0
-		return value * (max - min) + min;
+		return this.clamp(value) * (max - min) + min;
+	}
+
+	function clamp = function(n, min, max) {
+		return Math.min(Math.max(n, min), max);
 	}
 
 	return arm;
