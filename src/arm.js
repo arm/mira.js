@@ -34,5 +34,22 @@ var board = new five.Board({
 });
 
 board.on('ready', function() {
-	var arm = Arm(this);
+	// var arm = Arm(this);
+	var options = {};
+	var controller = Leap.loop(options, function(frame) {
+		if (frame.hands.length > 0) {
+			var hand = frame.hands[0];
+			var pos = toCoords(hand.palmPosition);
+		}
+	});
+
+
+	function toCoords(position) {
+		return {
+			x: position[0],
+			y: position[1],
+			z: position[2]
+		}
+	}
+	
 });
