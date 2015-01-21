@@ -25,7 +25,6 @@ var Arm = function(board) {
 
 Arm.prototype = (function() {
 	var arm = new Object();
-
 	return arm;
 })();
 
@@ -39,10 +38,10 @@ board.on('ready', function() {
 	var controller = Leap.loop(options, function(frame) {
 		if (frame.hands.length > 0) {
 			var hand = frame.hands[0];
-			var pos = toCoords(hand.palmPosition);
+			var box = frame.interactionBox;
+			var pos = toCoords(box.normalizePoint(hand.palmPosition, true));
 		}
 	});
-
 
 	function toCoords(position) {
 		return {
@@ -51,5 +50,4 @@ board.on('ready', function() {
 			z: position[2]
 		}
 	}
-	
 });
