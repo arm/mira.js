@@ -63,7 +63,7 @@ Arm.prototype = (function() {
 		return this.clamp(value) * (max - min) + min;
 	}
 
-	function clamp = function(n, min, max) {
+	function clamp(n, min, max) {
 		return Math.min(Math.max(n, min), max);
 	}
 
@@ -91,6 +91,9 @@ board.on('ready', function() {
 			var pitch = radToDeg(hand.pitch());
 
 			arm.setPinch(pinch);
+
+			document.getElementById('coords').innerHTML = pos;
+
 		}
 	});
 
