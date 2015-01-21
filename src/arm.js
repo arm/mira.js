@@ -50,6 +50,15 @@ Arm.prototype = (function() {
 
 	}
 
+	arm.to = function(x, y, z) { // x, y, z are each 0.0 - 1.0
+		var base = calculateRotation(x, z);
+	
+	}
+
+	arm.calculateRotation = function(x, z) { 
+
+	}
+
 	function scale(value, min, max) { // value from 0.0 - 1.0
 		return this.clamp(value) * (max - min) + min;
 	}
