@@ -24,7 +24,12 @@ var Arm = function(board) {
 }
 
 Arm.prototype = (function() {
-	var arm = new Object();
+	var arm = {};
+
+	arm.setServo = function(servoName, value) {
+		this.servos[servoName].to(value);
+	}
+
 	return arm;
 })();
 
@@ -33,7 +38,8 @@ var board = new five.Board({
 });
 
 board.on('ready', function() {
-	// var arm = Arm(this);
+	var arm = new Arm(this);
+
 	var options = {};
 	var controller = Leap.loop(options, function(frame) {
 		if (frame.hands.length > 0) {
