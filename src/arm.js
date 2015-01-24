@@ -22,8 +22,8 @@ var Arm = function(board) {
 
 	var servoPins = {
 		'pinch': 13, 
-		'pitch': 12,
-		'roll': 11,
+		'roll': 12,
+		'pitch': 11,
 		'elbow': 10,
 		'shoulderLeft': 9,
 		'shoulderRight': 8,
@@ -42,10 +42,35 @@ var Arm = function(board) {
 Arm.prototype = (function() {
 	var arm = {};
 
+	// all from behind of arm
 	var servoBounds = {
 		'pinch': {
 			closed: 15,
 			open: 90
+		},
+		'roll': { // palm facing (side with servo)
+			left: 180,
+			right: 0
+		},
+		'pitch': {
+			down: 180,
+			up: 0
+		},
+		'elbow': { // has to be given values in this range -- otherwise sevo disengages
+			down: 23,
+			up: 157
+		}.
+		'shoulderLeft': {
+			back: 0,
+			forward: 175
+		},	
+		'shoulderRight': {
+			back: 175,
+			forward: 0
+		},
+		'base': {
+			left: 180,
+			right: 0
 		}
 	}
 
