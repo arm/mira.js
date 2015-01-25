@@ -80,47 +80,55 @@ Arm.prototype = (function() {
 
 	arm.setPinch = function(value) { // 0.0 (open) - 1.0 (closed)
 		var bounds = servoBounds['pinch']; 
-		this.setServo('pinch', this.scale(value, bounds.open, bounds.closed)); // consolidate into one function maybe
+		this.setServo('pinch', scale(value, bounds.open, bounds.closed)); // consolidate into one function maybe
 	}
 
 	arm.setRoll = function(value) { // 0.0 (palm left) - 1.0 (palm right)
 		var bounds = servoBounds['roll'];
-		this.setServo('roll', this.scale(value, bounds.left, bounds.right);
+		this.setServo('roll', scale(value, bounds.left, bounds.right);
 	}
 
 	arm.setPitch = function(value) { // 0.0 (pointing down) - 1.0 (up)
 		var bounds = servoBounds['pitch'];
-		this.setServo('pitch', this.scale(value, bounds.down, bounds.up));
+		this.setServo('pitch', scale(value, bounds.down, bounds.up));
 	}
 
 	arm.setElbow = function(value) { // 0.0 (down)- 1.0 (up)
 		var bounds =  servoBounds['elbow'];
-		this.setServo('elbow', this.scale(value, bounds.down, bounds.up));	
+		this.setServo('elbow', scale(value, bounds.down, bounds.up));	
 	} 
 
 	arm.setShoulder = function(value) { // 0.0 (back) - 1.0 (forward) 
 		var leftBounds = servoBounds['shoulderLeft'];
 		var rightBounds = servoBounds['shoulderRight'];
-		this.setServo('shoulderLeft', this.scale(value, bounds.back, bounds.forward));
-		this.setServo('shoulderRight', this.scale(value, bounds.back, bounds.forward));
+		this.setServo('shoulderLeft', scale(value, bounds.back, bounds.forward));
+		this.setServo('shoulderRight', scale(value, bounds.back, bounds.forward));
 	}
 
 	arm.setBase = function(value) { // 0.0 (left) - 1.0 (right)
 		var bounds = servoBounds['base'];
-		this.setServo('base', this.scale(value, bounds.left, bounds.right));
+		this.setServo('base', scale(value, bounds.left, bounds.right));
 	}
 
 	arm.to = function(x, y, z) { // x, y, z are each 0.0 - 1.0
 		var base = calculateRotation(x, z);
-	
+		
 	}
 
-	arm.calculateRotation = function(x, z) { 
+	arm.calculateRotation = function(x, z) {
+		return radToDeg(Math.atan(z / x));
+	}
 
+	function dist(a, b) {
+		return Math.sqrt(Math.pow(a, 2), Math.pow(b, 2));
+	}
+
+	function radToDeg(radians) {
+		return radians * (180 / Math.PI);
 	}
 
 	function scale(value, min, max) { // value from 0.0 - 1.0
-		return this.clamp(value) * (max - min) + min;
+		return clamp(value) * (max - min) + min;
 	}
 
 	function clamp(n, min, max) {
