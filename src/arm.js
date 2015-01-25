@@ -48,7 +48,7 @@ Arm.prototype = (function() {
 	// all from behind of arm
 	var servoBounds = {
 		'pinch': {
-			closed: 15,
+			closed: 10,
 			open: 90
 		},
 		'roll': { // palm facing (side with servo)
@@ -79,41 +79,18 @@ Arm.prototype = (function() {
 
 	// could probably do away with some of these:
 
-	arm.setServo = function(servoName, value) {
-		this.servos[servoName].to(value);
-	}
+	// arm.setServo = function(servoName, value) {
+	// 	this.servos[servoName].to(value);
+	// }
 
-	arm.setPinch = function(value) { // 0.0 (open) - 1.0 (closed)
-		var bounds = servoBounds['pinch']; 
-		this.setServo('pinch', scale(value, bounds.open, bounds.closed)); // consolidate into one function maybe
-	}
-
-	arm.setRoll = function(value) { // 0.0 (palm left) - 1.0 (palm right)
-		var bounds = servoBounds['roll'];
-		this.setServo('roll', scale(value, bounds.left, bounds.right));
-	}
-
-	arm.setPitch = function(value) { // 0.0 (pointing down) - 1.0 (up)
-		var bounds = servoBounds['pitch'];
-		this.setServo('pitch', scale(value, bounds.down, bounds.up));
-	}
-
-	arm.setElbow = function(value) { // 0.0 (down)- 1.0 (up)
-		var bounds =  servoBounds['elbow'];
-		this.setServo('elbow', scale(value, bounds.down, bounds.up));	
-	} 
-
-	arm.setShoulder = function(value) { // 0.0 (back) - 1.0 (forward) 
-		var leftBounds = servoBounds['shoulderLeft'];
-		var rightBounds = servoBounds['shoulderRight'];
-		this.setServo('shoulderLeft', scale(value, leftBounds.back, leftBounds.forward));
-		this.setServo('shoulderRight', scale(value, rightBounds.back, rightBounds.forward));
+	arm.setPinch = function(value) { // 0 - open, 1- closed
+		var bounds = servoBounds['pinch'];
+		this.servos['pinch'].to(scale(value, bounds.open, bounds.closed));
 	}
 
 	arm.setBase = function(value) { // 0.0 (left) - 1.0 (right)
 		var bounds = servoBounds['base'];
-		console.log(scale(value, bounds.left, bounds.right));
-		this.setServo('base', scale(value, bounds.left, bounds.right));
+		this.servos['base'].to(scale(value, bounds.left, bounds.right));
 	}
 
 	arm.to = function(x, y, z) { // x, y, z are each -1.0 - 1.0
@@ -125,9 +102,9 @@ Arm.prototype = (function() {
 		l2 = this.forearmLength;
 
 		var base = this.calculateRotation(x, z);
-		debug(base);
 		var distance = dist(x, z) * (l1 + l2);
 
+		y = y * (l1 + l2);
 
 		var theta_2 = Math.atan2(-Math.sqrt(1 - (Math.pow(Math.pow(distance, 2) + Math.pow(y, 2) - Math.pow(l1, 2) - Math.pow(l2, 2) / (2 * l1 * l2), 2)), ((Math.pow(distance, 2) + Math.pow(y, 2) - Math.pow(l1, 2) - Math.pow(l2, 2)) / (2 * l1 * l2)), 2));
 		var k1 = l1 + l2 * Math.cos(theta_2);
@@ -138,8 +115,13 @@ Arm.prototype = (function() {
 		var elbow = radToDeg(theta_2) / 180;
 
 		this.setBase(base / 180); // maybe later change these to just get angle and set it
-		this.setShoulder(shoulder);
-		this.setElbow(elbow);
+		// this.setShoulder(shoulder);
+		// this.setElbow(elbow);
+
+		console.log(shoulder, elbow);
+
+
+
 	}
 
 	arm.calculateRotation = function(x, z) {
@@ -190,8 +172,8 @@ board.on('ready', function() {
 			var pitch = radToDeg(hand.pitch());
 
 			arm.setPinch(pinch);
-			arm.to(pos.x, pos.y, pos.z);
-
+			// arm.to(pos.x, pos.y, pos.z);
+			debug(pinch);
 			document.getElementById('coords').innerHTML = '('+String(pos.x)+', '+String(pos.y)+', '+String(pos.z)+')';
 		}
 	});
