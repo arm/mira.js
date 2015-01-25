@@ -7,14 +7,14 @@ var Readable = require("stream").Readable;
 var util = require("util");
 util.inherits(MyStream, Readable);
 function MyStream(opt) {
-  Readable.call(this, opt);
+	Readable.call(this, opt);
 }
 MyStream.prototype._read = function() {};
 // hook in our stream
 process.__defineGetter__("stdin", function() {
-  if (process.__stdin) return process.__stdin;
-  process.__stdin = new MyStream();
-  return process.__stdin;
+	if (process.__stdin) return process.__stdin;
+	process.__stdin = new MyStream();
+	return process.__stdin;
 });
 
 var Arm = function(board) {
@@ -36,6 +36,7 @@ var Arm = function(board) {
 		var pin = servoPins[name];
 		this.servos[name] = new five.Servo(pin);
 	}
+	console.log(this.servos);
 	this.lights = new five.Led(ledsPin);
 	this.forearmLength = 128.86;
 	this.upperArmLength = 140;
@@ -105,21 +106,28 @@ Arm.prototype = (function() {
 	arm.setShoulder = function(value) { // 0.0 (back) - 1.0 (forward) 
 		var leftBounds = servoBounds['shoulderLeft'];
 		var rightBounds = servoBounds['shoulderRight'];
-		this.setServo('shoulderLeft', scale(value, bounds.back, bounds.forward));
-		this.setServo('shoulderRight', scale(value, bounds.back, bounds.forward));
+		this.setServo('shoulderLeft', scale(value, leftBounds.back, leftBounds.forward));
+		this.setServo('shoulderRight', scale(value, rightBounds.back, rightBounds.forward));
 	}
 
 	arm.setBase = function(value) { // 0.0 (left) - 1.0 (right)
 		var bounds = servoBounds['base'];
+		console.log(scale(value, bounds.left, bounds.right));
 		this.setServo('base', scale(value, bounds.left, bounds.right));
 	}
 
-	arm.to = function(x, y, z) { // x, y, z are each 0.0 - 1.0
-		var base = calculateRotation(x, z) / 180;
-		var distance = dist(x, z);
+	arm.to = function(x, y, z) { // x, y, z are each -1.0 - 1.0
+		// z: 0 (back), 1 (forward)
+		// x: -1 (left), 1 (right)
+		// y: 0 (down), 1 (up)
 
 		var l1 = this.upperArmLength,
-			l2 = this.forearmLength;
+		l2 = this.forearmLength;
+
+		var base = this.calculateRotation(x, z);
+		debug(base);
+		var distance = dist(x, z) * (l1 + l2);
+
 
 		var theta_2 = Math.atan2(-Math.sqrt(1 - (Math.pow(Math.pow(distance, 2) + Math.pow(y, 2) - Math.pow(l1, 2) - Math.pow(l2, 2) / (2 * l1 * l2), 2)), ((Math.pow(distance, 2) + Math.pow(y, 2) - Math.pow(l1, 2) - Math.pow(l2, 2)) / (2 * l1 * l2)), 2));
 		var k1 = l1 + l2 * Math.cos(theta_2);
@@ -129,15 +137,15 @@ Arm.prototype = (function() {
 		var shoulder = radToDeg(theta_1) / 180;
 		var elbow = radToDeg(theta_2) / 180;
 
-		this.setBase(base); // maybe later change these to just get angle and set it
+		this.setBase(base / 180); // maybe later change these to just get angle and set it
 		this.setShoulder(shoulder);
-		this.setElbow(shoulder);
+		this.setElbow(elbow);
 	}
 
 	arm.calculateRotation = function(x, z) {
 		var rotation = radToDeg(Math.atan(z / x));
 		if (x < 0) {
-			rotation = rotation + 180;
+		 	rotation = 180 + rotation;
 		}
 		return 180 - rotation;
 	}
@@ -151,7 +159,7 @@ Arm.prototype = (function() {
 	}
 
 	function scale(value, min, max) { // value from 0.0 - 1.0
-		return clamp(value) * (max - min) + min;
+		return clamp(value, 0, 1) * (max - min) + min;
 	}
 
 	function clamp(n, min, max) {
@@ -182,21 +190,27 @@ board.on('ready', function() {
 			var pitch = radToDeg(hand.pitch());
 
 			arm.setPinch(pinch);
+			arm.to(pos.x, pos.y, pos.z);
 
-			document.getElementById('coords').innerHTML = pos;
-
+			document.getElementById('coords').innerHTML = '('+String(pos.x)+', '+String(pos.y)+', '+String(pos.z)+')';
 		}
 	});
 
 	function toCoords(position) {
 		return {
-			x: position[0],
+			x: 2 * position[0] - 1,
 			y: position[1],
-			z: position[2]
+			z: 1 - position[2]
 		}
 	}
 
 	function radToDeg(radians) {
 		return radians * (180 / Math.PI);
 	}
+
 });
+
+
+function debug(a) {
+	document.getElementById('debug').innerHTML = String(a);
+}
