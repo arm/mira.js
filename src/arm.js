@@ -37,6 +37,8 @@ var Arm = function(board) {
 		this.servos[name] = new five.Servo(pin);
 	}
 	this.lights = new five.Led(ledsPin);
+	this.forearmLength = 128.86;
+	this.upperArmLength = 140;
 }
 
 Arm.prototype = (function() {
@@ -73,6 +75,8 @@ Arm.prototype = (function() {
 			right: 0
 		}
 	}
+
+	// could probably do away with some of these:
 
 	arm.setServo = function(servoName, value) {
 		this.servos[servoName].to(value);
@@ -111,12 +115,31 @@ Arm.prototype = (function() {
 	}
 
 	arm.to = function(x, y, z) { // x, y, z are each 0.0 - 1.0
-		var base = calculateRotation(x, z);
-		
+		var base = calculateRotation(x, z) / 180;
+		var distance = dist(x, z);
+
+		var l1 = this.upperArmLength,
+			l2 = this.forearmLength;
+
+		var theta_2 = Math.atan2(-Math.sqrt(1 - (Math.pow(Math.pow(distance, 2) + Math.pow(y, 2) - Math.pow(l1, 2) - Math.pow(l2, 2) / (2 * l1 * l2), 2)), ((Math.pow(distance, 2) + Math.pow(y, 2) - Math.pow(l1, 2) - Math.pow(l2, 2)) / (2 * l1 * l2)) )
+		var k1 = l1 + l2 * Math.cos(theta_2),
+			k2 = l2 * Math.sin(theta_2);
+
+		var theta_1 = Math.atan2(y, distance) - Math.atan2(k2, k1)  // in radians
+		var shoulder = radToDeg(theta_1) / 180;
+		var elbow = radToDeg(theta_2) / 180;
+
+		this.setBase(base); // maybe later change these to just get angle and set it
+		this.setShoulder(shoulder);
+		this.setElbow(shoulder);
 	}
 
 	arm.calculateRotation = function(x, z) {
-		return radToDeg(Math.atan(z / x));
+		var rotation = radToDeg(Math.atan(z / x));
+		if (x < 0) {
+			rotation = rotation + 180;
+		}
+		return 180 - rotation;
 	}
 
 	function dist(a, b) {
