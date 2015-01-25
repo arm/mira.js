@@ -61,7 +61,7 @@ Arm.prototype = (function() {
 		'elbow': { // has to be given values in this range -- otherwise sevo disengages
 			down: 23,
 			up: 157
-		}.
+		},
 		'shoulderLeft': {
 			back: 0,
 			forward: 175
@@ -89,7 +89,7 @@ Arm.prototype = (function() {
 
 	arm.setRoll = function(value) { // 0.0 (palm left) - 1.0 (palm right)
 		var bounds = servoBounds['roll'];
-		this.setServo('roll', scale(value, bounds.left, bounds.right);
+		this.setServo('roll', scale(value, bounds.left, bounds.right));
 	}
 
 	arm.setPitch = function(value) { // 0.0 (pointing down) - 1.0 (up)
@@ -121,9 +121,9 @@ Arm.prototype = (function() {
 		var l1 = this.upperArmLength,
 			l2 = this.forearmLength;
 
-		var theta_2 = Math.atan2(-Math.sqrt(1 - (Math.pow(Math.pow(distance, 2) + Math.pow(y, 2) - Math.pow(l1, 2) - Math.pow(l2, 2) / (2 * l1 * l2), 2)), ((Math.pow(distance, 2) + Math.pow(y, 2) - Math.pow(l1, 2) - Math.pow(l2, 2)) / (2 * l1 * l2)) )
-		var k1 = l1 + l2 * Math.cos(theta_2),
-			k2 = l2 * Math.sin(theta_2);
+		var theta_2 = Math.atan2(-Math.sqrt(1 - (Math.pow(Math.pow(distance, 2) + Math.pow(y, 2) - Math.pow(l1, 2) - Math.pow(l2, 2) / (2 * l1 * l2), 2)), ((Math.pow(distance, 2) + Math.pow(y, 2) - Math.pow(l1, 2) - Math.pow(l2, 2)) / (2 * l1 * l2)), 2));
+		var k1 = l1 + l2 * Math.cos(theta_2);
+		var k2 = l2 * Math.sin(theta_2);
 
 		var theta_1 = Math.atan2(y, distance) - Math.atan2(k2, k1)  // in radians
 		var shoulder = radToDeg(theta_1) / 180;
