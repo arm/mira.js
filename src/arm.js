@@ -80,15 +80,34 @@ Arm.prototype = (function() {
 
 	arm.setPinch = function(value) { // 0.0 (open) - 1.0 (closed)
 		var bounds = servoBounds['pinch']; 
-		this.setServo('pinch', this.scale(value, bounds.open, bounds.closed));
+		this.setServo('pinch', this.scale(value, bounds.open, bounds.closed)); // consolidate into one function maybe
 	}
 
 	arm.setRoll = function(value) { // 0.0 (palm left) - 1.0 (palm right)
-
+		var bounds = servoBounds['roll'];
+		this.setServo('roll', this.scale(value, bounds.left, bounds.right);
 	}
 
 	arm.setPitch = function(value) { // 0.0 (pointing down) - 1.0 (up)
+		var bounds = servoBounds['pitch'];
+		this.setServo('pitch', this.scale(value, bounds.down, bounds.up));
+	}
 
+	arm.setElbow = function(value) { // 0.0 (down)- 1.0 (up)
+		var bounds =  servoBounds['elbow'];
+		this.setServo('elbow', this.scale(value, bounds.down, bounds.up));	
+	} 
+
+	arm.setShoulder = function(value) { // 0.0 (back) - 1.0 (forward) 
+		var leftBounds = servoBounds['shoulderLeft'];
+		var rightBounds = servoBounds['shoulderRight'];
+		this.setServo('shoulderLeft', this.scale(value, bounds.back, bounds.forward));
+		this.setServo('shoulderRight', this.scale(value, bounds.back, bounds.forward));
+	}
+
+	arm.setBase = function(value) { // 0.0 (left) - 1.0 (right)
+		var bounds = servoBounds['base'];
+		this.setServo('base', this.scale(value, bounds.left, bounds.right));
 	}
 
 	arm.to = function(x, y, z) { // x, y, z are each 0.0 - 1.0
