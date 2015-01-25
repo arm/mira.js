@@ -143,42 +143,38 @@ Arm.prototype = (function() {
 
 		if (!isNaN(shoulder)) {
 
-			last = elbow;
+			last = elbow; // so that when shoulder and elbow are NaN and out of the range, elbow does not fall limp
 
-		this.setBase(base / 180); // maybe later change these to just get angle and set it
-		this.setShoulder(shoulder / 180);
-		this.setElbow((180 + elbow) / 180);
+			this.setBase(base / 180); // maybe later change these to just get angle and set it
+			this.setShoulder(shoulder / 180);
+			this.setElbow((180 + elbow) / 180);
 
+		}
+		else {
+			this.setElbow( (180 + last) / 180 );
+		}
+
+		console.log(shoulder, elbow);
 	}
-	else {
-		this.setElbow( (180 + last) / 180 );
+
+	arm.calculateRotation = function(x, z) {
+		var rotation = radToDeg(Math.atan(z / x));
+		if (x < 0) {
+			rotation = 180 + rotation;
+		}
+		return 180 - rotation;
 	}
 
-	console.log(shoulder, elbow);
-}
-
-arm.calculateRotation = function(x, z) {
-	var rotation = radToDeg(Math.atan(z / x));
-	if (x < 0) {
-		rotation = 180 + rotation;
+	function dist(a, b) {
+		return Math.sqrt(Math.pow(a, 2) + Math.pow(b, 2));
 	}
-	return 180 - rotation;
-}
 
-function dist(a, b) {
-	return Math.sqrt(Math.pow(a, 2) + Math.pow(b, 2));
-}
-
-function radToDeg(radians) {
-	return radians * (180 / Math.PI);
-}
+	function radToDeg(radians) {
+		return radians * (180 / Math.PI);
+	}
 
 	function scale(value, min, max) { // value from 0.0 - 1.0
 		return clamp(value, 0, 1) * (max - min) + min;
-	}
-
-	function clamp(n, min, max) {
-		return Math.min(Math.max(n, min), max);
 	}
 
 	return arm;
@@ -188,6 +184,21 @@ var board = new five.Board({
 	repl: false
 });
 
+var boxBounds = {
+	x: {
+		min: -200,
+		max: 200
+	},
+	y: {
+		min: 150,
+		max: 500
+	},
+	z: {
+		min: -200,
+		max: 200
+	}
+}
+
 board.on('ready', function() {
 	var arm = new Arm(this);
 
@@ -195,10 +206,11 @@ board.on('ready', function() {
 	var controller = Leap.loop(options, function(frame) {
 		if (frame.hands.length > 0) {
 			var hand = frame.hands[0];
-			var box = frame.interactionBox;
-
-			var pos = toCoords(box.normalizePoint(hand.palmPosition, true));
+			// var box = frame.interactionBox;
+			// var pos = toCoords(box.normalizePoint(hand.palmPosition, true));
 			
+			var pos = toCoords(hand.palmPosition);
+
 			var pinch = hand.pinchStrength;
 
 			var roll = radToDeg(hand.roll()); // -90: facing left, 90: facing right
@@ -213,11 +225,11 @@ board.on('ready', function() {
 		}
 	});
 
-	function toCoords(position) {
+	function toCoords(position) { // normalizes point with custom bounds
 		return {
-			x: 2 * position[0] - 1,
-			y: position[1],
-			z: 1 - position[2]
+			x: 2 * (clamp(position[0], boxBounds.x.min, boxBounds.x.max) - boxBounds.x.min) / (boxBounds.x.max - boxBounds.x.min) - 1,
+			y: (clamp(position[1], boxBounds.y.min, boxBounds.y.max) - boxBounds.y.min) / (boxBounds.y.max - boxBounds.y.min),
+			z: 1 - (clamp(position[2], boxBounds.z.min, boxBounds.z.max) - boxBounds.z.min) / (boxBounds.z.max - boxBounds.z.min),
 		}
 	}
 
@@ -230,4 +242,8 @@ board.on('ready', function() {
 
 function debug(a) {
 	document.getElementById('debug').innerHTML = String(a);
+}
+
+function clamp(n, min, max) {
+	return Math.min(Math.max(n, min), max);
 }
