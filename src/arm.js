@@ -17,21 +17,11 @@ process.__defineGetter__("stdin", function() {
 	return process.__stdin;
 });
 
-var last; // last elbow position, later change to store state
-
 var Arm = function(board) {
 	this.board = board;
 
-	this.state = { // to store state of the arm
-		'pinch': -1,
-		'roll': -1, 
-		'elbow': -1,
-		'shoulderLeft': -1,
-		'shoulderRight': -1,
-		'base': -1,
-		'light': -1,
-	}
-
+	this.state = {};
+	this.lastState = {};
 	// this.lastState = this.state;
 
 	var servoPins = {
@@ -54,6 +44,8 @@ var Arm = function(board) {
 	this.components['lights'] = new five.Led(ledsPin);
 	this.forearmLength = 128.86;
 	this.upperArmLength = 140;
+
+	this.init();
 }
 
 Arm.prototype = (function() {
@@ -61,7 +53,7 @@ Arm.prototype = (function() {
 
 	// all from behind of arm
 	var servoBounds = {
-		'pinch': {
+		'pinch': { // maybe change all to lower, upper -- then can set position of all automatically using an obj
 			closed: 10,
 			open: 90
 		},
@@ -91,18 +83,30 @@ Arm.prototype = (function() {
 		}
 	}
 
-	arm.init = function() {
-
-	}
-
-	arm.getState = function(component) {
-		return this.state[component];
+	arm.init = function() { // initialize state and servos
+		// this.state = { // to store state of the arm
+		// 	'pinch': -1,
+		// 	'roll': -1, 
+		// 	'elbow': -1,
+		// 	'shoulderLeft': -1,
+		// 	'shoulderRight': -1,
+		// 	'base': -1,
+		// 	'light': -1,
+		// }
 	}
 
 	arm.set = function(name, value, lower, upper) { // maybe store all components in one obj, rather than just servos (e.g. the lights)
 		var scaled = scale(value, lower, upper);
 		this.state[name] = scaled;
 		this.components[name].to(scaled);
+	}
+
+	arm.get = function(name) {
+		return this.state[name];
+	}
+
+	arm.commitState = function() {
+		this.lastState = this.state;
 	}
 
 	arm.setPinch = function(value) { // 0 - open, 1- closed
@@ -136,7 +140,6 @@ Arm.prototype = (function() {
 	arm.setBase = function(value) { // 0.0 (left) - 1.0 (right)
 		var bounds = servoBounds['base'];
 		this.set('base', value, bounds.left, bounds.right);
-		// this.components['base'].to(scale(value, bounds.left, bounds.right));
 	}
 
 	arm.to = function(x, y, z) { // x, y, z are each -1.0 - 1.0
@@ -169,15 +172,13 @@ Arm.prototype = (function() {
 		var elbow = radToDeg(theta_2);
 
 		if (!isNaN(shoulder)) {
-			last = elbow; // so that when shoulder and elbow are NaN and out of the range, elbow does not fall limp
-
 			this.setBase(base / 180); // maybe later change these to just get angle and set it
 			this.setShoulder(shoulder / 180);
 			this.setElbow((180 + elbow) / 180);
 
 		}
 		else { // change to use new state storing
-			this.setElbow( (180 + last) / 180 );
+			this.setElbow( (180 + this.lastState['elbow']) / 180 );
 		}
 
 		console.log(shoulder, elbow);
@@ -247,13 +248,14 @@ board.on('ready', function() {
 			// arm.setPitch( (pitch + 90) / 180);
 			arm.to(pos.x, pos.y, pos.z);
 			arm.setPitch(arm.state[]);
+			arm.commitState();
 			debug(roll);
 			document.getElementById('coords').innerHTML = '('+String(pos.x)+', '+String(pos.y)+', '+String(pos.z)+')';
 		}
 	});
 
 	function toCoords(position) { // normalizes point with custom bounds
-		return {
+		return { // maybe add scaling function here
 			x: 2 * (clamp(position[0], boxBounds.x.min, boxBounds.x.max) - boxBounds.x.min) / (boxBounds.x.max - boxBounds.x.min) - 1,
 			y: (clamp(position[1], boxBounds.y.min, boxBounds.y.max) - boxBounds.y.min) / (boxBounds.y.max - boxBounds.y.min),
 			z: 1 - (clamp(position[2], boxBounds.z.min, boxBounds.z.max) - boxBounds.z.min) / (boxBounds.z.max - boxBounds.z.min),
