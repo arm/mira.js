@@ -17,10 +17,22 @@ process.__defineGetter__("stdin", function() {
 	return process.__stdin;
 });
 
-var last;
+var last; // last elbow position, later change to store state
 
 var Arm = function(board) {
 	this.board = board;
+
+	this.state = { // to store state of the arm
+		'pinch': -1,
+		'roll': -1, 
+		'elbow': -1,
+		'shoulderLeft': -1,
+		'shoulderRight': -1,
+		'base': -1,
+		'light': -1,
+	}
+
+	// this.lastState = this.state;
 
 	var servoPins = {
 		'pinch': 13, 
@@ -33,13 +45,13 @@ var Arm = function(board) {
 	}
 	var ledsPin = 6;
 
-	this.servos = new Object();
+	this.components = new Object();
 	for (name in servoPins) {
 		var pin = servoPins[name];
-		this.servos[name] = new five.Servo(pin);
+		this.components[name] = new five.Servo(pin);
 	}
 	// console.log(this.servos);
-	this.lights = new five.Led(ledsPin);
+	this.components['lights'] = new five.Led(ledsPin);
 	this.forearmLength = 128.86;
 	this.upperArmLength = 140;
 }
@@ -79,37 +91,52 @@ Arm.prototype = (function() {
 		}
 	}
 
+	arm.init = function() {
+
+	}
+
+	arm.getState = function(component) {
+		return this.state[component];
+	}
+
+	arm.set = function(name, value, lower, upper) { // maybe store all components in one obj, rather than just servos (e.g. the lights)
+		var scaled = scale(value, lower, upper);
+		this.state[name] = scaled;
+		this.components[name].to(scaled);
+	}
+
 	arm.setPinch = function(value) { // 0 - open, 1- closed
 		var bounds = servoBounds['pinch'];
-		this.servos['pinch'].to(scale(value, bounds.open, bounds.closed));
+		this.set('pinch', value, bounds.open, bounds.closed);
 	}
 
 	// consider changing to take angle
 	arm.setRoll = function(value) { // 0 - facing left, 1 - right
 		var bounds = servoBounds['roll'];
-		this.servos['roll'].to(scale(value, bounds.left, bounds.right));
+		this.set('roll', value, bounds.left, bounds.right);
 	}
 
 	arm.setPitch = function(value) { // 0 - down, 1 - up
 		var bounds = servoBounds['pitch'];
-		this.servos['pitch'].to(scale(value, bounds.down, bounds.up));
+		this.set('pitch', value, bounds.down, bounds.up);
 	}
 
 	arm.setElbow = function(value) { // 0.0 (down)- 1.0 (up)
 		var bounds = servoBounds['elbow'];
-		this.servos['elbow'].to(scale(value, bounds.down, bounds.up));	
+		this.set('elbow', value, bounds.down, bounds.up);
 	} 
 
 	arm.setShoulder = function(value) { // 0.0 (back) - 1.0 (forward) 
 		var leftBounds = servoBounds['shoulderLeft'];
 		var rightBounds = servoBounds['shoulderRight'];
-		this.servos['shoulderLeft'].to(scale(value, leftBounds.back, leftBounds.forward));
-		this.servos['shoulderRight'].to(scale(value, rightBounds.back, rightBounds.forward));
+		this.set('pitch', value, leftBounds.back, leftBounds.forward);
+		this.set('pitch', value, rightBounds.back, rightBounds.forward);
 	}
 
 	arm.setBase = function(value) { // 0.0 (left) - 1.0 (right)
 		var bounds = servoBounds['base'];
-		this.servos['base'].to(scale(value, bounds.left, bounds.right));
+		this.set('base', value, bounds.left, bounds.right);
+		// this.components['base'].to(scale(value, bounds.left, bounds.right));
 	}
 
 	arm.to = function(x, y, z) { // x, y, z are each -1.0 - 1.0
@@ -142,7 +169,6 @@ Arm.prototype = (function() {
 		var elbow = radToDeg(theta_2);
 
 		if (!isNaN(shoulder)) {
-
 			last = elbow; // so that when shoulder and elbow are NaN and out of the range, elbow does not fall limp
 
 			this.setBase(base / 180); // maybe later change these to just get angle and set it
@@ -150,7 +176,7 @@ Arm.prototype = (function() {
 			this.setElbow((180 + elbow) / 180);
 
 		}
-		else {
+		else { // change to use new state storing
 			this.setElbow( (180 + last) / 180 );
 		}
 
@@ -218,8 +244,9 @@ board.on('ready', function() {
 
 			arm.setPinch(pinch);
 			arm.setRoll( (roll + 90) / 180 );
-			arm.setPitch( (pitch + 90) / 180);
+			// arm.setPitch( (pitch + 90) / 180);
 			arm.to(pos.x, pos.y, pos.z);
+			arm.setPitch(arm.state[]);
 			debug(roll);
 			document.getElementById('coords').innerHTML = '('+String(pos.x)+', '+String(pos.y)+', '+String(pos.z)+')';
 		}
