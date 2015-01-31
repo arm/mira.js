@@ -1,6 +1,19 @@
+global.document = window.document;
+
 var five = require('johnny-five');
 var Leap = require('leapjs');
+var fs = require('fs'); 
+
 var THREE = require('three');
+// see if can do better later, rewrite into module?
+eval(fs.readFileSync('src/leap-plugins-0.1.10.js')+'');
+eval(fs.readFileSync('src/leap.rigged-hand-0.1.6.js')+'');
+
+// var controller = Leap.loop({}, function(frame) {
+// 		// if (frame.hands.length > 0) {
+// 		// var hand = frame.hands[0];
+// 	// }
+// }).use('riggedHand');
 
 // fix for node-webkit
 // https://github.com/rwaldron/johnny-five/wiki/Getting-started-with-Johnny-Five-and-Node-Webkit
@@ -75,7 +88,7 @@ Arm.prototype = (function() {
 			forward: 175
 		},	
 		'shoulderRight': {
-			back: 175,
+			back: 175, // relative to shoulder
 			forward: 0
 		},
 		'base': {
@@ -97,8 +110,8 @@ Arm.prototype = (function() {
 	}
 
 	arm.set = function(name, value, lower, upper) { // maybe store all components in one obj, rather than just servos (e.g. the lights)
+		this.state[name] = clamp(value, 0, 1);
 		var scaled = scale(value, lower, upper);
-		this.state[name] = scaled;
 		this.components[name].to(scaled);
 	}
 
@@ -123,7 +136,7 @@ Arm.prototype = (function() {
 
 	arm.setPitch = function(value) { // 0 - down, 1 - up
 		var bounds = servoBounds['pitch'];
-		var compensated = this.state['shoulder'] + this.state['elbow'] + 0.5; // should keep wrist parallel to ground always, must test + add wrist movement
+		var compensated = this.state['shoulderLeft'] - this.state['elbow'] + 0.5; // should keep wrist parallel to ground always, must test + add wrist movement
 		this.set('pitch', compensated, bounds.down, bounds.up);
 	}
 
@@ -134,9 +147,11 @@ Arm.prototype = (function() {
 
 	arm.setShoulder = function(value) { // 0.0 (back) - 1.0 (forward) 
 		var leftBounds = servoBounds['shoulderLeft'];
-		var rightBounds = servoBounds['shoulderRight'];
-		this.set('pitch', value, leftBounds.back, leftBounds.forward);
-		this.set('pitch', value, rightBounds.back, rightBounds.forward);
+		var rightBounds = servoBounds['shoulderRight']; 
+		// console.log(value);
+		debug(scale(value, leftBounds.back, leftBounds.forward)+' '+scale(value, rightBounds.back, rightBounds.forward));
+		this.set('shoulderLeft', value, leftBounds.back, leftBounds.forward);
+		this.set('shoulderRight', value, rightBounds.back, rightBounds.forward);
 	}
 
 	arm.setBase = function(value) { // 0.0 (left) - 1.0 (right)
@@ -177,13 +192,12 @@ Arm.prototype = (function() {
 			this.setBase(base / 180); // maybe later change these to just get angle and set it
 			this.setShoulder(shoulder / 180);
 			this.setElbow((180 + elbow) / 180);
-
 		}
 		else { // change to use new state storing
 			this.setElbow( (180 + this.lastState['elbow']) / 180 );
 		}
 
-		console.log(shoulder, elbow);
+		// console.log(shoulder, elbow);
 	}
 
 	arm.calculateRotation = function(x, z) {
@@ -237,7 +251,7 @@ board.on('ready', function() {
 			var hand = frame.hands[0];
 			// var box = frame.interactionBox;
 			// var pos = toCoords(box.normalizePoint(hand.palmPosition, true));
-			
+
 			var pos = toCoords(hand.palmPosition);
 
 			var pinch = hand.pinchStrength;
@@ -249,9 +263,8 @@ board.on('ready', function() {
 			arm.setRoll( (roll + 90) / 180 );
 			arm.to(pos.x, pos.y, pos.z);
 			arm.setPitch( (pitch + 90) / 180);
-
 			arm.commitState();
-			debug(roll);
+			// debug(arm.state['shoulderLeft']+' '+arm.state['shoulderRight']);
 			document.getElementById('coords').innerHTML = '('+String(pos.x)+', '+String(pos.y)+', '+String(pos.z)+')';
 		}
 	});
@@ -270,7 +283,6 @@ board.on('ready', function() {
 
 });
 
-
 function debug(a) {
 	document.getElementById('debug').innerHTML = String(a);
 }
@@ -278,3 +290,5 @@ function debug(a) {
 function clamp(n, min, max) {
 	return Math.min(Math.max(n, min), max);
 }
+
+
