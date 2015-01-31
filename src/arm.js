@@ -140,7 +140,7 @@ Arm.prototype = (function() {
 
 	arm.setPitch = function(value) { // 0 - down, 1 - up
 		var bounds = servoBounds['pitch'];
-		var compensated = (this.state['shoulderLeft'] / 6) - (this.state['elbow'] / 9) + 0.5; // should keep wrist parallel to ground always, must test + add wrist movement
+		var compensated = (this.state['shoulderLeft'] / 6) - (this.state['elbow'] / 9) + 0.6; // should keep wrist parallel to ground always, must test + add wrist movement
 		this.set('pitch', compensated, bounds.down, bounds.up);
 	}
 
