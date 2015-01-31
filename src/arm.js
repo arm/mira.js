@@ -36,6 +36,7 @@ var Arm = function(board) {
 
 	this.state = {};
 	this.lastState = {};
+	this.history = [];
 	// this.lastState = this.state;
 
 	var servoPins = {
@@ -124,6 +125,7 @@ Arm.prototype = (function() {
 	}
 
 	arm.commitState = function() {
+		this.history.push(this.state);
 		this.lastState = this.state;
 	}
 
