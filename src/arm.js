@@ -1,5 +1,6 @@
 var five = require('johnny-five');
 var Leap = require('leapjs');
+var THREE = require('three');
 
 // fix for node-webkit
 // https://github.com/rwaldron/johnny-five/wiki/Getting-started-with-Johnny-Five-and-Node-Webkit
