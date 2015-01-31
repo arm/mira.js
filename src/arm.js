@@ -125,7 +125,6 @@ Arm.prototype = (function() {
 	}
 
 	arm.commitState = function() {
-		this.history.push(this.state);
 		this.lastState = this.state;
 	}
 
@@ -213,6 +212,14 @@ Arm.prototype = (function() {
 		// console.log(shoulder, elbow);
 	}
 
+	arm.playHistory = function() {
+		console.log(this.history);
+	}
+
+	arm.addHistory = function() {
+		this.history.push(this.state);
+	}
+
 	arm.calculateRotation = function(x, z) {
 		var rotation = radToDeg(Math.atan(z / x));
 		if (x < 0) {
@@ -256,13 +263,35 @@ var boxBounds = {
 }
 
 var blinking = false;
+var recording = false;
+var playing = false;
+
+var recordingFramerate = 10; // frames per second
+var timer = 0;
 
 board.on('ready', function() {
 	var arm = new Arm(this);
 
+	var recordButton = document.getElementById('record');
+	recordButton.removeAttribute('disabled');
+	recordButton.onclick = function() {
+		recording = !recording;
+		if (recording) {
+			arm.history = [];
+			timer = 0;
+		}
+	}
+
+	var playButton = document.getElementById('play');
+	playButton.removeAttribute('disabled');
+	playButton.onclick = function() {
+		arm.playHistory();
+	}
+
 	var options = {};
 	var controller = Leap.loop(options, function(frame) {
-		if (frame.hands.length > 0) {
+		if (frame.hands.length > 0 && !playing) {
+
 			var hand = frame.hands[0];
 			// var box = frame.interactionBox;
 			// var pos = toCoords(box.normalizePoint(hand.palmPosition, true));
@@ -279,6 +308,13 @@ board.on('ready', function() {
 			arm.to(pos.x, pos.y, pos.z);
 			arm.setPitch( (pitch + 90) / 180);
 			arm.commitState();
+
+			if (recording) {
+				timer++; // increments by 60 every second
+				if (timer % (60 / 10) == 0) {
+					arm.addHistory();
+				}
+			}	
 			// debug(arm.state['shoulderLeft']+' '+arm.state['shoulderRight']);
 			document.getElementById('coords').innerHTML = '('+String(pos.x)+', '+String(pos.y)+', '+String(pos.z)+')';
 		}
@@ -309,5 +345,3 @@ function debug(a) {
 function clamp(n, min, max) {
 	return Math.min(Math.max(n, min), max);
 }
-
-
