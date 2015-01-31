@@ -85,10 +85,10 @@ Arm.prototype = (function() {
 		},
 		'shoulderLeft': {
 			back: 0,
-			forward: 175
+			forward: 180
 		},	
 		'shoulderRight': {
-			back: 175, // relative to shoulder
+			back: 180, // relative to shoulder
 			forward: 0
 		},
 		'base': {
@@ -140,7 +140,7 @@ Arm.prototype = (function() {
 
 	arm.setPitch = function(value) { // 0 - down, 1 - up
 		var bounds = servoBounds['pitch'];
-		var compensated = this.state['shoulderLeft'] - this.state['elbow'] + 0.5; // should keep wrist parallel to ground always, must test + add wrist movement
+		var compensated = (this.state['shoulderLeft'] / 6) - (this.state['elbow'] / 9) + 0.5; // should keep wrist parallel to ground always, must test + add wrist movement
 		this.set('pitch', compensated, bounds.down, bounds.up);
 	}
 
