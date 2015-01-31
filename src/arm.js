@@ -122,7 +122,8 @@ Arm.prototype = (function() {
 
 	arm.setPitch = function(value) { // 0 - down, 1 - up
 		var bounds = servoBounds['pitch'];
-		this.set('pitch', value, bounds.down, bounds.up);
+		var compensated = this.state['shoulder'] + this.state['elbow'] + 0.5; // should keep wrist parallel to ground always, must test + add wrist movement
+		this.set('pitch', compensated, bounds.down, bounds.up);
 	}
 
 	arm.setElbow = function(value) { // 0.0 (down)- 1.0 (up)
@@ -245,9 +246,9 @@ board.on('ready', function() {
 
 			arm.setPinch(pinch);
 			arm.setRoll( (roll + 90) / 180 );
-			// arm.setPitch( (pitch + 90) / 180);
 			arm.to(pos.x, pos.y, pos.z);
-			arm.setPitch(arm.state[]);
+			arm.setPitch( (pitch + 90) / 180);
+
 			arm.commitState();
 			debug(roll);
 			document.getElementById('coords').innerHTML = '('+String(pos.x)+', '+String(pos.y)+', '+String(pos.z)+')';
