@@ -6,7 +6,7 @@ var fs = require('fs');
 
 var THREE = require('three');
 // see if can do better later, rewrite into module?
-eval(fs.readFileSync('src/leap-plugins-0.1.10.js')+'');
+eval(fs.readFileSync('src/leap-plugins-0.1.10.js')+''); // these don't seem to be working
 eval(fs.readFileSync('src/leap.rigged-hand-0.1.6.js')+'');
 
 // var controller = Leap.loop({}, function(frame) {
@@ -49,13 +49,13 @@ var Arm = function(board) {
 	}
 	var ledsPin = 6;
 
-	this.components = new Object();
+	this.servos = new Object();
 	for (name in servoPins) {
 		var pin = servoPins[name];
-		this.components[name] = new five.Servo(pin);
+		this.servos[name] = new five.Servo(pin);
 	}
 	// console.log(this.servos);
-	this.components['lights'] = new five.Led(ledsPin);
+	this.lights = new five.Led(ledsPin);
 	this.forearmLength = 128.86;
 	this.upperArmLength = 140;
 
@@ -112,7 +112,11 @@ Arm.prototype = (function() {
 	arm.set = function(name, value, lower, upper) { // maybe store all components in one obj, rather than just servos (e.g. the lights)
 		this.state[name] = clamp(value, 0, 1);
 		var scaled = scale(value, lower, upper);
-		this.components[name].to(scaled);
+		this.servos[name].to(scaled);
+	}
+
+	arm.setLight = function(brightness) { // brightness from 0 - 1
+		this.lights.brightness(scale(brightness, 0, 255));
 	}
 
 	arm.get = function(name) {
@@ -188,12 +192,19 @@ Arm.prototype = (function() {
 		var shoulder = radToDeg(theta_1);
 		var elbow = radToDeg(theta_2);
 
-		if (!isNaN(shoulder)) {
+		if (!isNaN(shoulder)) { // if within range
+			blinking = false;
+			this.lights.stop();
+			this.setLight(1);
 			this.setBase(base / 180); // maybe later change these to just get angle and set it
 			this.setShoulder(shoulder / 180);
 			this.setElbow((180 + elbow) / 180);
 		}
 		else { // change to use new state storing
+			if (!blinking) {
+				this.lights.pulse(1000);
+			}
+			blinking = true;
 			this.setElbow( (180 + this.lastState['elbow']) / 180 );
 		}
 
@@ -242,6 +253,8 @@ var boxBounds = {
 	}
 }
 
+var blinking = false;
+
 board.on('ready', function() {
 	var arm = new Arm(this);
 
@@ -266,6 +279,10 @@ board.on('ready', function() {
 			arm.commitState();
 			// debug(arm.state['shoulderLeft']+' '+arm.state['shoulderRight']);
 			document.getElementById('coords').innerHTML = '('+String(pos.x)+', '+String(pos.y)+', '+String(pos.z)+')';
+		}
+		else if (!blinking) {
+			arm.lights.pulse(1000);
+			blinking = true;
 		}
 	});
 
