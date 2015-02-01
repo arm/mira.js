@@ -30,6 +30,7 @@ process.__defineGetter__("stdin", function() {
 	return process.__stdin;
 });
 
+
 var Arm = function(board) {
 	this.board = board;
 
@@ -108,7 +109,22 @@ Arm.prototype = (function() {
 		this.toState(initState);
 	}
 
-	arm.set = function(name, value, bounds) { // maybe store all components in one obj, rather than just servos (e.g. the lights)
+	arm.set = function(name, value, bounds, maxChange) { // maybe store all components in one obj, rather than just servos (e.g. the lights)
+		// var maxChange = 0.005;
+		if (!maxChange) {
+			maxChange = 0.1;
+		}
+		var maxStep = 0.005;
+		var last = this.lastState[name];
+		var difference = clamp(value, 0, 1) - last;
+		if (Math.abs(difference) > maxChange) {
+			if (difference >= 0) {
+				value = last + maxStep;
+			}
+			else {
+				value = last - maxStep;
+			}
+		}
 		this.state[name] = clamp(value, 0, 1);
 		var scaled = scale(value, bounds.low, bounds.high);
 		this.servos[name].to(scaled);
@@ -128,7 +144,7 @@ Arm.prototype = (function() {
 
 	arm.setPinch = function(value) { // 0 - open, 1- closed
 		var bounds = servoBounds['pinch'];
-		this.set('pinch', value, bounds);
+		this.set('pinch', value, bounds, 1);
 	}
 
 	// consider changing to take angle
@@ -227,12 +243,10 @@ Arm.prototype = (function() {
 
 	arm.toState = function(positions) {
 		for (var name in positions) {
-			var value = positions[name];
 			var bounds = servoBounds[name];
-			this.state[name] = clamp(value, 0, 1);
-			var scaled = scale(value, bounds.low, bounds.high);
-			this.servos[name].to(scaled);
+			this.set(name, positions[name], bounds);
 		}
+		this.commitState();
 	}
 
 	arm.calculateRotation = function(x, z) {
