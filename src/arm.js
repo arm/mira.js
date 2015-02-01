@@ -3,7 +3,6 @@ global.document = window.document;
 var five = require('johnny-five');
 var Leap = require('leapjs');
 var fs = require('fs'); 
-
 var THREE = require('three');
 // see if can do better later, rewrite into module?
 eval(fs.readFileSync('src/leap-plugins-0.1.10.js')+''); // these don't seem to be working
@@ -51,7 +50,7 @@ var Arm = function(board) {
 	var ledsPin = 6;
 
 	this.servos = new Object();
-	for (name in servoPins) {
+	for (var name in servoPins) {
 		var pin = servoPins[name];
 		this.servos[name] = new five.Servo(pin);
 	}
@@ -59,8 +58,6 @@ var Arm = function(board) {
 	this.lights = new five.Led(ledsPin);
 	this.forearmLength = 128.86;
 	this.upperArmLength = 140;
-
-	this.init();
 }
 
 Arm.prototype = (function() {
@@ -69,50 +66,51 @@ Arm.prototype = (function() {
 	// all from behind of arm
 	var servoBounds = {
 		'pinch': { // maybe change all to lower, upper -- then can set position of all automatically using an obj
-			closed: 10,
-			open: 90
+			low: 90, // open
+			high: 10 // closed
 		},
 		'roll': { // palm facing (side with servo)
-			left: 180,
-			right: 0
+			low: 180, // left
+			high: 0 // right
 		},
 		'pitch': {
-			down: 180,
-			up: 0
+			low: 180, // down
+			high: 0 // up
 		},
 		'elbow': { // has to be given values in this range -- otherwise sevo disengages
-			down: 25,
-			up: 156
+			low: 25, // down
+			high: 156 // up
 		},
 		'shoulderLeft': {
-			back: 0,
-			forward: 180
+			low: 0, // back
+			high: 180 // forward
 		},	
-		'shoulderRight': {
-			back: 180, // relative to shoulder
-			forward: 0
+		'shoulderRight': { // relative to shoulder
+			low: 180, // back 
+			high: 0 // forward
 		},
 		'base': {
-			left: 180,
-			right: 0
+			low: 180, // left
+			high: 0 // right
 		}
 	}
 
 	arm.init = function() { // initialize state and servos
-		// this.state = { // to store state of the arm
-		// 	'pinch': -1,
-		// 	'roll': -1, 
-		// 	'elbow': -1,
-		// 	'shoulderLeft': -1,
-		// 	'shoulderRight': -1,
-		// 	'base': -1,
-		// 	'light': -1,
-		// }
+		var initState = {
+			'pinch': 0.5, 
+			'roll': 0.5,
+			'pitch': 0.5,
+			'elbow': 0.5,
+			'shoulderLeft': 0.5,
+			'shoulderRight': 0.5,
+			'base': 0.5
+		};
+		this.toState(initState);
 	}
 
-	arm.set = function(name, value, lower, upper) { // maybe store all components in one obj, rather than just servos (e.g. the lights)
+	arm.set = function(name, value, bounds) { // maybe store all components in one obj, rather than just servos (e.g. the lights)
 		this.state[name] = clamp(value, 0, 1);
-		var scaled = scale(value, lower, upper);
+		var scaled = scale(value, bounds.low, bounds.high);
 		this.servos[name].to(scaled);
 	}
 
@@ -125,43 +123,42 @@ Arm.prototype = (function() {
 	}
 
 	arm.commitState = function() {
-		this.lastState = this.state;
+		this.lastState = clone(this.state);
 	}
 
 	arm.setPinch = function(value) { // 0 - open, 1- closed
 		var bounds = servoBounds['pinch'];
-		this.set('pinch', value, bounds.open, bounds.closed);
+		this.set('pinch', value, bounds);
 	}
 
 	// consider changing to take angle
 	arm.setRoll = function(value) { // 0 - facing left, 1 - right
 		var bounds = servoBounds['roll'];
-		this.set('roll', value, bounds.left, bounds.right);
+		this.set('roll', value, bounds);
 	}
 
 	arm.setPitch = function(value) { // 0 - down, 1 - up
 		var bounds = servoBounds['pitch'];
 		var compensated = (this.state['shoulderLeft'] / 6) - (this.state['elbow'] / 9) + 0.6; // should keep wrist parallel to ground always, must test + add wrist movement
-		this.set('pitch', compensated, bounds.down, bounds.up);
+		this.set('pitch', compensated, bounds);
 	}
 
 	arm.setElbow = function(value) { // 0.0 (down)- 1.0 (up)
 		var bounds = servoBounds['elbow'];
-		this.set('elbow', value, bounds.down, bounds.up);
+		this.set('elbow', value, bounds);
 	} 
 
 	arm.setShoulder = function(value) { // 0.0 (back) - 1.0 (forward) 
 		var leftBounds = servoBounds['shoulderLeft'];
 		var rightBounds = servoBounds['shoulderRight']; 
 		// console.log(value);
-		debug(scale(value, leftBounds.back, leftBounds.forward)+' '+scale(value, rightBounds.back, rightBounds.forward));
-		this.set('shoulderLeft', value, leftBounds.back, leftBounds.forward);
-		this.set('shoulderRight', value, rightBounds.back, rightBounds.forward);
+		this.set('shoulderLeft', value, leftBounds);
+		this.set('shoulderRight', value, rightBounds);
 	}
 
 	arm.setBase = function(value) { // 0.0 (left) - 1.0 (right)
 		var bounds = servoBounds['base'];
-		this.set('base', value, bounds.left, bounds.right);
+		this.set('base', value, bounds);
 	}
 
 	arm.to = function(x, y, z) { // x, y, z are each -1.0 - 1.0
@@ -174,7 +171,7 @@ Arm.prototype = (function() {
 
 		var base = this.calculateRotation(x, z);
 		
-		y = y * (l1 + l2);
+		y = y * (l1 + l2) + 100;
 		x = x * (l1 + l2);
 		z = z * (l1 + l2);
 
@@ -213,11 +210,29 @@ Arm.prototype = (function() {
 	}
 
 	arm.playHistory = function() {
-		console.log(this.history);
+		playing = true;
+		var ref = this;
+		for (var i = 0; i < this.history.length; i++) {
+			setTimeout(function(val) {
+				// console.log(ref.history[val]);
+				ref.toState(ref.history[val]); // if use 'i', then it will use i at the value during call time, which will be history.length
+			}, i * 1000 / recordingFramerate, i); // playback speed not exact! try to fix this later
+		}
+		// console.log(ref.history);
 	}
 
 	arm.addHistory = function() {
-		this.history.push(this.state);
+		this.history.push(clone(this.state));
+	}
+
+	arm.toState = function(positions) {
+		for (var name in positions) {
+			var value = positions[name];
+			var bounds = servoBounds[name];
+			this.state[name] = clamp(value, 0, 1);
+			var scaled = scale(value, bounds.low, bounds.high);
+			this.servos[name].to(scaled);
+		}
 	}
 
 	arm.calculateRotation = function(x, z) {
@@ -271,14 +286,20 @@ var timer = 0;
 
 board.on('ready', function() {
 	var arm = new Arm(this);
+	arm.init();
 
 	var recordButton = document.getElementById('record');
 	recordButton.removeAttribute('disabled');
 	recordButton.onclick = function() {
 		recording = !recording;
+
 		if (recording) {
+			this.innerHTML = 'stop recording';
 			arm.history = [];
 			timer = 0;
+		}
+		else {
+			this.innerHTML = 'record';
 		}
 	}
 
@@ -344,4 +365,8 @@ function debug(a) {
 
 function clamp(n, min, max) {
 	return Math.min(Math.max(n, min), max);
+}
+
+function clone(obj) {
+	return JSON.parse(JSON.stringify(obj));
 }
