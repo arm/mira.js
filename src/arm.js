@@ -112,12 +112,12 @@ Arm.prototype = (function() {
 	arm.set = function(name, value, bounds, maxChange) { // maybe store all components in one obj, rather than just servos (e.g. the lights)
 		// var maxChange = 0.005;
 		if (!maxChange) {
-			maxChange = 0.1;
+			maxChange = 0.5;
 		}
 		var maxStep = 0.005;
 		var last = this.lastState[name];
 		var difference = clamp(value, 0, 1) - last;
-		if (Math.abs(difference) > maxChange) {
+		if (Math.abs(difference) > maxChange && !playing) {
 			if (difference >= 0) {
 				value = last + maxStep;
 			}
@@ -125,8 +125,8 @@ Arm.prototype = (function() {
 				value = last - maxStep;
 			}
 		}
-		this.state[name] = clamp(value, 0, 1);
 		var scaled = scale(value, bounds.low, bounds.high);
+		this.state[name] = clamp(value, 0, 1);
 		this.servos[name].to(scaled);
 	}
 
@@ -144,7 +144,7 @@ Arm.prototype = (function() {
 
 	arm.setPinch = function(value) { // 0 - open, 1- closed
 		var bounds = servoBounds['pinch'];
-		this.set('pinch', value, bounds, 1);
+		this.set('pinch', value, bounds, 1000);
 	}
 
 	// consider changing to take angle
@@ -155,7 +155,7 @@ Arm.prototype = (function() {
 
 	arm.setPitch = function(value) { // 0 - down, 1 - up
 		var bounds = servoBounds['pitch'];
-		var compensated = (this.state['shoulderLeft'] / 6) - (this.state['elbow'] / 9) + 0.6; // should keep wrist parallel to ground always, must test + add wrist movement
+		var compensated = (this.state['shoulderLeft'] / 6) - (this.state['elbow'] / 9) + value; // should keep wrist parallel to ground always, must test + add wrist movement
 		this.set('pitch', compensated, bounds);
 	}
 
@@ -187,7 +187,7 @@ Arm.prototype = (function() {
 
 		var base = this.calculateRotation(x, z);
 		
-		y = y * (l1 + l2) + 100;
+		y = y * (l1 + l2) + 50; // offset
 		x = x * (l1 + l2);
 		z = z * (l1 + l2);
 
@@ -229,10 +229,12 @@ Arm.prototype = (function() {
 		playing = true;
 		var ref = this;
 		for (var i = 0; i < this.history.length; i++) {
-			setTimeout(function(val) {
-				// console.log(ref.history[val]);
+			setTimeout(function(val, end) {
+				console.log(ref.history[val]);
 				ref.toState(ref.history[val]); // if use 'i', then it will use i at the value during call time, which will be history.length
-			}, i * 1000 / recordingFramerate, i); // playback speed not exact! try to fix this later
+				playing = !end;
+				// console.log(end);
+			}, i * 1000 / (1.5 * recordingFramerate), i, i >= this.history.length - 1); // playback speed not exact! try to fix this later
 		}
 		// console.log(ref.history);
 	}
@@ -320,7 +322,9 @@ board.on('ready', function() {
 	var playButton = document.getElementById('play');
 	playButton.removeAttribute('disabled');
 	playButton.onclick = function() {
-		arm.playHistory();
+		if (!playing) {
+			arm.playHistory();
+		}
 	}
 
 	var options = {};
