@@ -193,11 +193,11 @@ Arm.prototype = (function() {
 
 		var distance = dist(x, z);
 
-		var theta_2 = Math.atan2(-Math.sqrt(1 - (Math.pow(Math.pow(distance, 2) + Math.pow(y, 2) - Math.pow(l1, 2) - Math.pow(l2, 2) / (2 * l1 * l2), 2)), ((Math.pow(distance, 2) + Math.pow(y, 2) - Math.pow(l1, 2) - Math.pow(l2, 2)) / (2 * l1 * l2)), 2));
+		// var theta_2 = Math.atan2(-Math.sqrt(1 - (Math.pow(Math.pow(distance, 2) + Math.pow(y, 2) - Math.pow(l1, 2) - Math.pow(l2, 2) / (2 * l1 * l2), 2)), ((Math.pow(distance, 2) + Math.pow(y, 2) - Math.pow(l1, 2) - Math.pow(l2, 2)) / (2 * l1 * l2)), 2));
 
 		var a = Math.pow(distance, 2) + Math.pow(y, 2) - Math.pow(l1, 2) - Math.pow(l2, 2); 
 		var b = (2 * l1 * l2);
-		theta_2 = Math.atan2(-Math.sqrt(1 - Math.pow(a / b, 2)), (a / b));
+		var theta_2 = Math.atan2(-Math.sqrt(1 - Math.pow(a / b, 2)), (a / b));
 
 		var k1 = l1 + l2 * Math.cos(theta_2);
 		var k2 = l2 * Math.sin(theta_2);
@@ -304,6 +304,10 @@ board.on('ready', function() {
 	var arm = new Arm(this);
 	arm.init();
 
+	var spinner = document.getElementById('spinner');
+	spinner.style.display = 'none';
+
+	controls.style.display = 'box';
 	var recordButton = document.getElementById('record');
 	recordButton.removeAttribute('disabled');
 	recordButton.onclick = function() {
@@ -355,7 +359,7 @@ board.on('ready', function() {
 				}
 			}	
 			// debug(arm.state['shoulderLeft']+' '+arm.state['shoulderRight']);
-			document.getElementById('coords').innerHTML = '('+String(pos.x)+', '+String(pos.y)+', '+String(pos.z)+')';
+			// document.getElementById('coords').innerHTML = '('+String(pos.x)+', '+String(pos.y)+', '+String(pos.z)+')';
 		}
 		else if (!blinking) {
 			arm.lights.pulse(1000);
