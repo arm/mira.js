@@ -12,17 +12,21 @@
 	<script src='arm.js'></script>
 	<style>
 	button {
-		padding: 1em;
+		font-size: 16px;
+		font-family: 'Clear Sans';
+		padding: 1.2em;
 		border: none;
+		background-color: #ddd;
 		border-radius: 0.25em;
 	}
 	button:disabled {
-		opacity: 0.7;
+		opacity: 0.5;
 	}
 	#record {
 		color: white;
 		background-color: #c0392b;
 	}
+
 	#spinner {
 		margin: 100px auto;
 		width: 50px;
@@ -77,7 +81,7 @@
 		</style>
 	</head>
 	<div id='controls'>
-<!-- 		<div id='coords'>
+		<!--<div id='coords'>
 		</div> -->
 
 		<div id='debug'>
@@ -89,6 +93,13 @@
 
 		<button id='play' disabled>
 			play
+		</button>
+
+		<button id='save' disabled>
+			save
+		</button>
+		<button id='delete' disabled>
+			delete
 		</button>
 	</div>
 	<div id="spinner">

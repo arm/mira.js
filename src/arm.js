@@ -234,7 +234,7 @@ Arm.prototype = (function() {
 				ref.toState(ref.history[val]); // if use 'i', then it will use i at the value during call time, which will be history.length
 				playing = !end;
 				// console.log(end);
-			}, i * 1000 / (1.5 * recordingFramerate), i, i >= this.history.length - 1); // playback speed not exact! try to fix this later
+			}, i * 1000 / (1.6 * recordingFramerate), i, i >= this.history.length - 1); // playback speed not exact! try to fix this later
 		}
 		// console.log(ref.history);
 	}
@@ -309,14 +309,18 @@ board.on('ready', function() {
 
 	controls.style.display = 'box';
 	var recordButton = document.getElementById('record');
+	var saveButton = document.getElementById('save');
 	recordButton.removeAttribute('disabled');
 	recordButton.onclick = function() {
 		recording = !recording;
 
 		if (recording) {
-			this.innerHTML = 'stop recording';
+			this.innerHTML = 'stop';
 			arm.history = [];
 			timer = 0;
+			if (saveButton.hasAttribute('disabled')) {
+				saveButton.removeAttribute('disabled');
+			}
 		}
 		else {
 			this.innerHTML = 'record';
@@ -331,21 +335,37 @@ board.on('ready', function() {
 		}
 	}
 
+	var recordingId = 0;
+	saveButton.onclick = function() {
+		if (!recording && arm.history.length > 0) {
+			var filepath = 'recordings/recording_'+recordingId+'.json';
+			fs.writeFile(filepath, JSON.stringify(arm.history), function(err) {
+				if (err) {
+					console.log(err);
+				}
+				else {
+					console.log('saved');
+					recordingId++;
+				}
+			});
+		}
+	}
+
 	var options = {};
 	// var controller = Leap.loop(options, function(frame) {
-	var controller = new Leap.Controller();
-	var fps = 30;
-	controller.on('connect', function() {
-		setInterval(function() {
+		var controller = new Leap.Controller();
+		var fps = 30;
+		controller.on('connect', function() {
+			setInterval(function() {
 				var frame = controller.frame();
 				handleFrame(frame);
 			}, 1000 / fps);
-	});
-	controller.connect();
-	function handleFrame(frame) {
-		if (frame.hands.length > 0 && !playing) {
+		});
+		controller.connect();
+		function handleFrame(frame) {
+			if (frame.hands.length > 0 && !playing) {
 
-			var hand = frame.hands[0];
+				var hand = frame.hands[0];
 			// var box = frame.interactionBox;
 			// var pos = toCoords(box.normalizePoint(hand.palmPosition, true));
 
