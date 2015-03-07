@@ -234,7 +234,7 @@ Arm.prototype = (function() {
 				ref.toState(ref.history[val]); // if use 'i', then it will use i at the value during call time, which will be history.length
 				playing = !end;
 				// console.log(end);
-			}, i * 1000 / (1.6 * recordingFramerate), i, i >= this.history.length - 1); // playback speed not exact! try to fix this later
+			}, i * (1000 / fps), i, i >= this.history.length - 1); // playback speed not exact! try to fix this later
 		}
 		// console.log(ref.history);
 	}
@@ -257,6 +257,14 @@ Arm.prototype = (function() {
 			rotation = 180 + rotation;
 		}
 		return 180 - rotation;
+	}
+
+	arm.playHistoryFromFile = function(filepath) {
+		playing = true;
+		var string = fs.readFileSync(filepath, 'utf8');
+		var history = JSON.parse(string);
+		this.history = history;
+		this.playHistory();
 	}
 
 	function dist(a, b) {
@@ -292,12 +300,13 @@ var boxBounds = {
 		max: 200
 	}
 }
+var fps = 30;
 
 var blinking = false;
 var recording = false;
 var playing = false;
 
-var recordingFramerate = 10; // frames per second
+// var recordingFramerate = 20; // frames per second
 var timer = 0;
 
 board.on('ready', function() {
@@ -331,7 +340,9 @@ board.on('ready', function() {
 	playButton.removeAttribute('disabled');
 	playButton.onclick = function() {
 		if (!playing) {
-			arm.playHistory();
+			var filepath = 'recordings/recording_0.json';
+			arm.playHistoryFromFile(filepath);
+			// arm.playHistory();
 		}
 	}
 
@@ -354,7 +365,6 @@ board.on('ready', function() {
 	var options = {};
 	// var controller = Leap.loop(options, function(frame) {
 		var controller = new Leap.Controller();
-		var fps = 30;
 		controller.on('connect', function() {
 			setInterval(function() {
 				var frame = controller.frame();
@@ -383,10 +393,10 @@ board.on('ready', function() {
 			arm.commitState();
 
 			if (recording) {
-				timer++; // increments by 60 every second
-				if (timer % (60 / 10) == 0) {
+				// timer++; // increments by fps every second
+				// if (timer % (fps / recordingFramerate) == 0) {
 					arm.addHistory();
-				}
+				// }
 			}	
 			// debug(arm.state['shoulderLeft']+' '+arm.state['shoulderRight']);
 			// document.getElementById('coords').innerHTML = '('+String(pos.x)+', '+String(pos.y)+', '+String(pos.z)+')';
