@@ -332,7 +332,17 @@ board.on('ready', function() {
 	}
 
 	var options = {};
-	var controller = Leap.loop(options, function(frame) {
+	// var controller = Leap.loop(options, function(frame) {
+	var controller = new Leap.Controller();
+	var fps = 30;
+	controller.on('connect', function() {
+		setInterval(function() {
+				var frame = controller.frame();
+				handleFrame(frame);
+			}, 1000 / fps);
+	});
+	controller.connect();
+	function handleFrame(frame) {
 		if (frame.hands.length > 0 && !playing) {
 
 			var hand = frame.hands[0];
@@ -365,7 +375,8 @@ board.on('ready', function() {
 			arm.lights.pulse(1000);
 			blinking = true;
 		}
-	});
+	}
+	// });
 
 	function toCoords(position) { // normalizes point with custom bounds
 		return { // maybe add scaling function here
