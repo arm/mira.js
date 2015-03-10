@@ -70,7 +70,9 @@ board.on('ready', function() {
 });
 
 function useKeyboard(arm) {
-	var pos = {x: 0, y: 0.5, z: 0.5};
+	var state = {pinch: 0, pitch: 0, roll: 0};
+	state.pos = {x: 0, y: 0.5, z: 0.5};
+
 	var pressed = {};
 	initializeKeyboard();
 	run();
@@ -90,7 +92,7 @@ function useKeyboard(arm) {
 	function run() {
 		setTimeout(function() {
 			updateState();
-			moveArm(pos);
+			moveArm(state);
 			window.requestAnimationFrame(run);
 		}, 1000 / fps);
 	}
@@ -100,27 +102,47 @@ function useKeyboard(arm) {
 			'up': 38,
 			'down': 40,
 			'left': 37,
-			'right': 39
+			'right': 39,
+			'space': 32,
+			'w': 87,
+			'a': 65,
+			's': 83,
+			'd': 68,
+			'i': 73,
+			'j': 74,
+			'k': 75, 
+			'l': 76,
+			'p': 80,
+			';': 186
 		}
 		if (pressed[codes[key]]) return true;
 		return false;
 	}
 
 	var change = 0.01;
+	var factor = 4;
 	function updateState() {
-		if (isPressed('up')) {
-			pos.z += change;
-		}
-		if (isPressed('down')) {
-			pos.z -= change;
-		}
-		if (isPressed('left')) {
-			pos.x -= change;
-		}
-		if (isPressed('right')) {
-			pos.x += change;
-		}
-		clampPos(pos);
+		if (isPressed('i'))	state.pos.z += change; // forward
+		if (isPressed('k'))	state.pos.z -= change; // back
+		if (isPressed('j'))	state.pos.x -= change; // left
+		if (isPressed('l'))	state.pos.x += change; // right
+		if (isPressed('p')) state.pos.y += change; // up
+		if (isPressed(';')) state.pos.y -= change; // down
+		
+		if (isPressed('w')) state.pitch += change * factor;
+		if (isPressed('s')) state.pitch -= change * factor;
+
+		if (isPressed('a')) state.roll += change * factor;
+		if (isPressed('d')) state.roll -= change * factor;
+
+		if (isPressed('space')) state.pinch += change * factor;
+		else state.pinch -= change * factor;
+
+		state.pitch = clamp(state.pitch, -1, 1);
+		state.roll = clamp(state.roll, -1, 1);
+		state.pinch = clamp(state.pinch, 0, 1);
+		clampPos(state.pos);
+		debug(state.pos.x+', '+state.pos.y+', '+state.pos.z);
 	}
 
 	function clampPos(pos) {
@@ -129,18 +151,27 @@ function useKeyboard(arm) {
 		pos.z = clamp(pos.z, 0, 1);
 	}
 
-	function moveArm(pos) {
+	function moveArm(state) {
+		var pos = state.pos;
+		var pinch = state.pinch;
+
+		var roll = state.roll * 90; // -90: facing left, 90: facing right
+		var pitch = state.pitch * 90; // -90: down, 90: up
+
 		arm.to(pos.x, pos.y, pos.z);
+		arm.setPinch(pinch);
+		arm.setRoll( (roll + 90) / 180 );
+		arm.setPitch( (pitch + 90) / 180);
+		arm.commitState();
+
+		if (recording) {
+			arm.addHistory();
+		}	
 	}
 
 }
 
-
-
-
-
-
-
+// finish this stuff later:
 function useController(arm) {
 	var express = require('express');
 	var app = express();
@@ -301,8 +332,6 @@ function useLeapMotion(arm) {
 	function radToDeg(radians) {
 		return radians * (180 / Math.PI);
 	}
-
-
 
 }
 
