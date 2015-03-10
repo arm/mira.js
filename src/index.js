@@ -109,20 +109,25 @@ board.on('ready', function() {
 		}
 	}
 
-	var options = {};
-	// var controller = Leap.loop(options, function(frame) {
-		var controller = new Leap.Controller();
-		controller.on('connect', function() {
-			setInterval(function() {
-				var frame = controller.frame();
-				handleFrame(frame);
-			}, 1000 / fps);
-		});
-		controller.connect();
-		function handleFrame(frame) {
-			if (frame.hands.length > 0 && !playing) {
+	useLeapMotion(arm);
 
-				var hand = frame.hands[0];
+});
+
+
+
+function useLeapMotion(arm) {
+	var controller = new Leap.Controller();
+	controller.on('connect', function() {
+		setInterval(function() {
+			var frame = controller.frame();
+			handleFrame(frame);
+		}, 1000 / fps);
+	});
+	controller.connect();
+	function handleFrame(frame) {
+		if (frame.hands.length > 0 && !playing) {
+
+			var hand = frame.hands[0];
 			// var box = frame.interactionBox;
 			// var pos = toCoords(box.normalizePoint(hand.palmPosition, true));
 
@@ -153,7 +158,6 @@ board.on('ready', function() {
 			blinking = true;
 		}
 	}
-	// });
 
 	function toCoords(position) { // normalizes point with custom bounds
 		return { // maybe add scaling function here
@@ -167,16 +171,11 @@ board.on('ready', function() {
 		return radians * (180 / Math.PI);
 	}
 
-});
+	function debug(a) {
+		document.getElementById('debug').innerHTML = String(a);
+	}
 
-function debug(a) {
-	document.getElementById('debug').innerHTML = String(a);
-}
-
-function clamp(n, min, max) {
-	return Math.min(Math.max(n, min), max);
-}
-
-function clone(obj) {
-	return JSON.parse(JSON.stringify(obj));
+	function clamp(n, min, max) {
+		return Math.min(Math.max(n, min), max);
+	}
 }
