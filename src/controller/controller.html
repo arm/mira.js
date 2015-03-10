@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+	<meta charset='utf-8'>
+	<meta http-equiv='X-UA-Compatible' content='IE=edge'>
+	<meta name='viewport' content='width=device-width, initial-scale=1'>
+	<meta name='description' content=''>
+	<meta name='author' content=''>
+	<link rel='shortcut icon' href=''>
+	<title>arm.js</title>
+	<!-- // <script src='controller.js'></script> try to fix this later -->
+	<style>
+	button {
+		font-size: 16px;
+		font-family: 'Clear Sans';
+		padding: 1.2em;
+		border: none;
+		background-color: #ddd;
+		border-radius: 0.25em;
+	}
+	</style>
+	<script>
+	window.onload = function() {
+		var controlling = false;
+		var controlButton = document.getElementById('control');
+		controlButton.onclick = function() {
+			controlling = !controlling;
+			post('/control', {'controlling': controlling});
+			if (!controlling) {
+				this.innerHTML = 'start';
+			}	
+			else {
+				this.innerHTML = 'stop';
+			}
+		}.bind(controlButton);
+	}
+
+	function post(url, data, callback) {
+	// adapted from http://youmightnotneedjquery.com/
+	var request = new XMLHttpRequest();
+	request.open('POST', url, true);
+	request.onload = function() {
+		if (callback) {
+			callback(request.responseText, request.status);
+		}
+	}
+	request.setRequestHeader('Content-Type', 'application/json; charset=UTF-8');
+	request.send(JSON.stringify(data));
+	
+}
+
+</script>
+</head>
+<body>
+	<button id='control'>start</button>
+	<input type='range' value='50'>
+</body>
+</html>
