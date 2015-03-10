@@ -4,10 +4,11 @@
   "description": "",
   "main": "src/index.html",
   "dependencies": {
+    "body-parser": "^1.12.0",
+    "express": "^4.12.2",
     "johnny-five": "^0.8.38",
     "leapjs": "^0.6.4",
-    "nodewebkit": "^0.8.6",
-    "three": "^0.69.0"
+    "nodewebkit": "^0.8.6"
   },
   "devDependencies": {},
   "scripts": {

@@ -2,16 +2,10 @@ global.document = window.document;
 
 var five = require('johnny-five');
 var Leap = require('leapjs');
+
 var fs = require('fs'); 
-var THREE = require('three');
 
 var Arm = require('./arm.js');
-
-// var controller = Leap.loop({}, function(frame) {
-// 		// if (frame.hands.length > 0) {
-// 		// var hand = frame.hands[0];
-// 	// }
-// }).use('riggedHand');
 
 // fix for node-webkit
 // https://github.com/rwaldron/johnny-five/wiki/Getting-started-with-Johnny-Five-and-Node-Webkit
@@ -53,16 +47,40 @@ var blinking = false;
 var recording = false;
 var playing = false;
 
-// var recordingFramerate = 20; // frames per second
-var timer = 0;
+// board.on('ready', function() {
+	// var arm = new Arm(this);
+	// arm.init();
+	arm = {};
+	// initializeUI(arm);
+	useController(arm);
+	// useLeapMotion(arm);
+// });
 
-board.on('ready', function() {
-	var arm = new Arm(this);
-	arm.init();
+function useController(arm) {
+	var express = require('express');
+	var app = express();
+	var bodyParser = require('body-parser');
+	app.use(bodyParser.json());
+	var controlling = false;
 
-	initializeUI(arm);
-	useLeapMotion(arm);
-});
+	// normal dirname is broken bc of node webkit i think?
+	__dirname = '/Users/Michael/Desktop/Arduino Programs/sci_fair/final-js';
+
+	app.get('/', function(req, resp) {
+		resp.sendFile(__dirname + '/src/controller/controller.html');
+	});
+
+	app.post('/control', function(req, resp) {
+		controlling = req.body.controlling;
+	});
+
+	var server = app.listen(3000, function() {
+		var host = server.address().address;
+		var port = server.address().port;
+
+		console.log('Listening at http://%s:%s', host, port);
+	});
+}
 
 function initializeUI(arm) {
 	var spinner = document.getElementById('spinner');
@@ -93,7 +111,7 @@ function initializeUI(arm) {
 	playButton.onclick = function() {
 		if (!playing) {
 			var filepath = 'recordings/recording_0.json';
-			arm.playHistoryFromFile(filepath);
+			arm.playHistoryFromFile(filepath); // update ui to handle this stuff!
 			// arm.playHistory();
 		}
 	}
