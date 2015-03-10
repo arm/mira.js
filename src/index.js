@@ -60,6 +60,11 @@ board.on('ready', function() {
 	var arm = new Arm(this);
 	arm.init();
 
+	initializeUI(arm);
+	useLeapMotion(arm);
+});
+
+function initializeUI(arm) {
 	var spinner = document.getElementById('spinner');
 	spinner.style.display = 'none';
 
@@ -108,12 +113,7 @@ board.on('ready', function() {
 			});
 		}
 	}
-
-	useLeapMotion(arm);
-
-});
-
-
+}
 
 function useLeapMotion(arm) {
 	var controller = new Leap.Controller();
