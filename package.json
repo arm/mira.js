@@ -31,7 +31,7 @@
     "frame": true,
     "width": 360,
     "height": 400,
-    "resizable": false,
+    "resizable": true,
     "position": "mouse",
     "min_width": 360,
     "min_height": 400,
