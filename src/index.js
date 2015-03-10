@@ -27,7 +27,7 @@ var board = new five.Board({
 	repl: false
 });
 
-var boxBounds = {
+var leapBounds = {
 	x: {
 		min: -200,
 		max: 200
@@ -41,20 +41,105 @@ var boxBounds = {
 		max: 200
 	}
 }
+
+// var controllerBounds = {
+// 	x {
+
+// 	},
+// 	y {
+
+// 	},
+// 	z {
+
+// 	}
+// }
+
 var fps = 30;
 
 var blinking = false;
 var recording = false;
 var playing = false;
 
-// board.on('ready', function() {
-	// var arm = new Arm(this);
-	// arm.init();
-	arm = {};
-	// initializeUI(arm);
-	useController(arm);
+board.on('ready', function() {
+	var arm = new Arm(this);
+	arm.init();
+	initializeUI(arm);
+	useKeyboard(arm);
+	// useController(arm);
 	// useLeapMotion(arm);
-// });
+});
+
+function useKeyboard(arm) {
+	var pos = {x: 0, y: 0.5, z: 0.5};
+	var pressed = {};
+	initializeKeyboard();
+	run();
+
+	function initializeKeyboard(obj) {
+		document.addEventListener('keydown', function(e) {
+			console.log(e.keyCode);
+			pressed[e.keyCode] = true;
+		});
+
+		document.addEventListener('keyup', function(e) {
+			pressed[e.keyCode] = false;
+		});
+
+	}
+
+	function run() {
+		setTimeout(function() {
+			updateState();
+			moveArm(pos);
+			window.requestAnimationFrame(run);
+		}, 1000 / fps);
+	}
+
+	function isPressed(key) {
+		var codes = {
+			'up': 38,
+			'down': 40,
+			'left': 37,
+			'right': 39
+		}
+		if (pressed[codes[key]]) return true;
+		return false;
+	}
+
+	var change = 0.01;
+	function updateState() {
+		if (isPressed('up')) {
+			pos.z += change;
+		}
+		if (isPressed('down')) {
+			pos.z -= change;
+		}
+		if (isPressed('left')) {
+			pos.x -= change;
+		}
+		if (isPressed('right')) {
+			pos.x += change;
+		}
+		clampPos(pos);
+	}
+
+	function clampPos(pos) {
+		pos.x = clamp(pos.x, -1, 1);
+		pos.y = clamp(pos.y, 0, 1);
+		pos.z = clamp(pos.z, 0, 1);
+	}
+
+	function moveArm(pos) {
+		arm.to(pos.x, pos.y, pos.z);
+	}
+
+}
+
+
+
+
+
+
 
 function useController(arm) {
 	var express = require('express');
@@ -62,6 +147,8 @@ function useController(arm) {
 	var bodyParser = require('body-parser');
 	app.use(bodyParser.json());
 	var controlling = false;
+
+	var controller = {};
 
 	// normal dirname is broken bc of node webkit i think?
 	__dirname = '/Users/Michael/Desktop/Arduino Programs/sci_fair/final-js';
@@ -72,7 +159,44 @@ function useController(arm) {
 
 	app.post('/control', function(req, resp) {
 		controlling = req.body.controlling;
+		if (controlling) {
+			run();
+		}
 	});
+
+	app.post('/values', function(req, resp) {
+		controller = req.body.controller;
+	});
+
+	function run() {
+		setTimeout(function() {
+			moveArm(controller);
+			if (controlling) {
+				window.requestAnimationFrame(run);
+			}
+		}, 1000 / fps);
+	}
+
+	function moveArm(controller) { // get to work for Leap Motion as well
+		if (controller) {
+			var pos = toCoords(controller.coordinates, controllerBounds);
+
+			var pinch = controller.pinchStrength;
+
+			// var roll = radToDeg(controller.roll()); // -90: facing left, 90: facing right
+			// var pitch = radToDeg(controller.pitch()); // -90: down, 90: up
+
+			arm.setPinch(pinch);
+			// arm.setRoll( (roll + 90) / 180 );
+			arm.to(pos.x, pos.y, pos.z);
+			// arm.setPitch( (pitch + 90) / 180);
+			arm.commitState();
+
+			if (recording) {
+				arm.addHistory();
+			}	
+		}
+	}
 
 	var server = app.listen(3000, function() {
 		var host = server.address().address;
@@ -149,7 +273,7 @@ function useLeapMotion(arm) {
 			// var box = frame.interactionBox;
 			// var pos = toCoords(box.normalizePoint(hand.palmPosition, true));
 
-			var pos = toCoords(hand.palmPosition);
+			var pos = toCoords(hand.palmPosition, leapBounds);
 
 			var pinch = hand.pinchStrength;
 
@@ -163,10 +287,7 @@ function useLeapMotion(arm) {
 			arm.commitState();
 
 			if (recording) {
-				// timer++; // increments by fps every second
-				// if (timer % (fps / recordingFramerate) == 0) {
-					arm.addHistory();
-				// }
+				arm.addHistory();
 			}	
 			// debug(arm.state['shoulderLeft']+' '+arm.state['shoulderRight']);
 			// document.getElementById('coords').innerHTML = '('+String(pos.x)+', '+String(pos.y)+', '+String(pos.z)+')';
@@ -177,23 +298,26 @@ function useLeapMotion(arm) {
 		}
 	}
 
-	function toCoords(position) { // normalizes point with custom bounds
-		return { // maybe add scaling function here
-			x: 2 * (clamp(position[0], boxBounds.x.min, boxBounds.x.max) - boxBounds.x.min) / (boxBounds.x.max - boxBounds.x.min) - 1,
-			y: (clamp(position[1], boxBounds.y.min, boxBounds.y.max) - boxBounds.y.min) / (boxBounds.y.max - boxBounds.y.min),
-			z: 1 - (clamp(position[2], boxBounds.z.min, boxBounds.z.max) - boxBounds.z.min) / (boxBounds.z.max - boxBounds.z.min),
-		}
-	}
-
 	function radToDeg(radians) {
 		return radians * (180 / Math.PI);
 	}
 
-	function debug(a) {
-		document.getElementById('debug').innerHTML = String(a);
-	}
 
-	function clamp(n, min, max) {
-		return Math.min(Math.max(n, min), max);
+
+}
+
+function toCoords(position, bounds) { // normalizes point with custom bounds
+	return { // maybe add scaling function here
+		x: 2 * (clamp(position[0], bounds.x.min, bounds.x.max) - bounds.x.min) / (bounds.x.max - bounds.x.min) - 1,
+		y: (clamp(position[1], bounds.y.min, bounds.y.max) - bounds.y.min) / (bounds.y.max - bounds.y.min),
+		z: 1 - (clamp(position[2], bounds.z.min, bounds.z.max) - bounds.z.min) / (bounds.z.max - bounds.z.min),
 	}
+}
+
+function debug(a) {
+	document.getElementById('debug').innerHTML = String(a);
+}
+
+function clamp(n, min, max) {
+	return Math.min(Math.max(n, min), max);
 }

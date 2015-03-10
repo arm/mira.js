@@ -20,9 +20,20 @@
 	}
 	</style>
 	<script>
+	// todo: add movement box for x and z coordinates
+	// get sliders and slider data
+	// send data + get correct range values for server
+
+	// all values in controller object
+
 	window.onload = function() {
+
 		var controlling = false;
 		var controlButton = document.getElementById('control');
+		var movementBox = document.getElementById('movementBox'); 
+
+		var controller = {};
+
 		controlButton.onclick = function() {
 			controlling = !controlling;
 			post('/control', {'controlling': controlling});
@@ -31,8 +42,30 @@
 			}	
 			else {
 				this.innerHTML = 'stop';
+				run();
 			}
 		}.bind(controlButton);
+
+		movementBox.addEventListener('touchmove', updateCoordinates);
+	}
+
+	var fps = 30;
+
+	function run() { // don't need loop actually, could just update on controller state update?
+		setTimeout(function() {
+			sendData();
+			if (controlling) {
+				window.requestAnimationFrame(run);
+			}
+		}, 1000 / fps);
+	}
+
+	function updateCoordinates(event) {
+		controller.x = event.touches;
+	}
+
+	function sendData() {
+
 	}
 
 	function post(url, data, callback) {
