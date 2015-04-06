@@ -1,7 +1,11 @@
 var five = require('johnny-five');
+var fs = require('fs'); 
 
-var Arm = function(board) {
+var status = {};
+
+var Arm = function(board, fps) {
 	this.board = board;
+	this.fps = fps;
 
 	this.state = {};
 	this.lastState = {};
@@ -48,8 +52,8 @@ Arm.prototype = (function() {
 			high: 0 // up
 		},
 		'elbow': { // has to be given values in this range -- otherwise sevo disengages
-			low: 25, // down
-			high: 156 // up
+			low: 0, // down
+			high: 180 // up
 		},
 		'shoulderLeft': {
 			low: 0, // back
@@ -83,10 +87,11 @@ Arm.prototype = (function() {
 		if (!maxChange) {
 			maxChange = 0.5;
 		}
-		var maxStep = 0.005;
+		// var maxStep = 0.003;
+		var maxStep = 0.001;
 		var last = this.lastState[name];
 		var difference = clamp(value, 0, 1) - last;
-		if (Math.abs(difference) > maxChange && !playing) {
+		if (Math.abs(difference) > maxChange && !status.playing) {
 			if (difference >= 0) {
 				value = last + maxStep;
 			}
@@ -113,6 +118,9 @@ Arm.prototype = (function() {
 
 	arm.setPinch = function(value) { // 0 - open, 1- closed
 		var bounds = servoBounds['pinch'];
+		if (value >= 0.6) {
+			value = 1;
+		}
 		this.set('pinch', value, bounds, 1000);
 	}
 
@@ -156,7 +164,7 @@ Arm.prototype = (function() {
 
 		var base = this.calculateRotation(x, z);
 		
-		y = y * (l1 + l2) + 50; // offset
+		y = y * (l1 + l2) + 10; // offset
 		x = x * (l1 + l2);
 		z = z * (l1 + l2);
 
@@ -176,7 +184,7 @@ Arm.prototype = (function() {
 		var elbow = radToDeg(theta_2);
 
 		if (!isNaN(shoulder)) { // if within range
-			blinking = false;
+			status.blinking = false;
 			this.lights.stop();
 			this.setLight(1);
 			this.setBase(base / 180); // maybe later change these to just get angle and set it
@@ -184,10 +192,10 @@ Arm.prototype = (function() {
 			this.setElbow((180 + elbow) / 180);
 		}
 		else { // change to use new state storing
-			if (!blinking) {
+			if (!status.blinking) {
 				this.lights.pulse(1000);
 			}
-			blinking = true;
+			status.blinking = true;
 			this.setElbow( (180 + this.lastState['elbow']) / 180 );
 		}
 
@@ -195,15 +203,16 @@ Arm.prototype = (function() {
 	}
 
 	arm.playHistory = function() {
-		playing = true;
+		status.playing = true;
 		var ref = this;
 		for (var i = 0; i < this.history.length; i++) {
 			setTimeout(function(val, end) {
 				console.log(ref.history[val]);
 				ref.toState(ref.history[val]); // if use 'i', then it will use i at the value during call time, which will be history.length
-				playing = !end;
+				status.playing = !end;
+				console.log(i * (1000 / this.fps));
 				// console.log(end);
-			}, i * (1000 / fps), i, i >= this.history.length - 1); // playback speed not exact! try to fix this later
+			}, i * (1000 / this.fps), i, i >= this.history.length - 1); // playback speed not exact! try to fix this later
 		}
 		// console.log(ref.history);
 	}
@@ -229,7 +238,7 @@ Arm.prototype = (function() {
 	}
 
 	arm.playHistoryFromFile = function(filepath) {
-		playing = true;
+		status.playing = true;
 		var string = fs.readFileSync(filepath, 'utf8');
 		var history = JSON.parse(string);
 		this.history = history;
@@ -252,6 +261,7 @@ Arm.prototype = (function() {
 })();
 
 module.exports = Arm;
+module.exports.status = status;
 
 function clamp(n, min, max) {
 	return Math.min(Math.max(n, min), max);
@@ -260,3 +270,4 @@ function clamp(n, min, max) {
 function clone(obj) {
 	return JSON.parse(JSON.stringify(obj));
 }
+
