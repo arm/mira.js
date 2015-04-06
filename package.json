@@ -1,45 +1,23 @@
 {
-  "name": "arm.js",
-  "version": "0.0.0",
-  "description": "",
-  "main": "src/index.html",
-  "dependencies": {
-    "body-parser": "^1.12.0",
-    "express": "^4.12.2",
-    "johnny-five": "^0.8.38",
-    "leapjs": "^0.6.4",
-    "nodewebkit": "^0.8.6"
-  },
-  "devDependencies": {},
+  "name": "mira.js",
+  "version": "1.0.0",
+  "description": "motion interface robotic arm",
+  "main": "src/index.js",
   "scripts": {
-    "start": "nodewebkit",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/arm/arm.js.git"
+    "url": "http://github.com/arm/mira.js.git"
   },
-  "author": "Michael Yang and Danny Lu",
+  "author": "Danny Lu, Michael Yang",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/arm/arm.js/issues"
+    "url": "https://github.com/arm/mira.js/issues"
   },
-  "homepage": "https://github.com/arm/arm.js",
-  "window": {
-    "title": "arm",
-    "icon": "",
-    "toolbar": true,
-    "frame": true,
-    "width": 360,
-    "height": 400,
-    "resizable": true,
-    "position": "mouse",
-    "min_width": 360,
-    "min_height": 400,
-    "max_width": 800,
-    "max_height": 600
-  },
-  "webkit": {
-    "plugin": true
+  "homepage": "https://github.com/arm/mira.js",
+  "dependencies": {
+    "johnny-five": "^0.8.52",
+    "leapjs": "^0.6.4"
   }
 }
