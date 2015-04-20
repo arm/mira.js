@@ -1,5 +1,5 @@
 var five = require('johnny-five');
-var fs = require('fs'); 
+var fs = require('fs');
 
 var status = {};
 
@@ -13,15 +13,15 @@ var Arm = function(board, fps) {
 	// this.lastState = this.state;
 
 	var servoPins = {
-		'pinch': 13, 
-		'roll': 12,
-		'pitch': 11,
-		'elbow': 10,
-		'shoulderLeft': 9,
-		'shoulderRight': 8,
-		'base': 7
+		'pinch': 10,
+		'roll': 9,
+		'pitch': 8,
+		'elbow': 7,
+		'shoulderLeft': 6,
+		'shoulderRight': 5,
+		'base': 4
 	}
-	var ledsPin = 6;
+	var ledsPin = 11;
 
 	this.servos = new Object();
 	for (var name in servoPins) {
@@ -40,8 +40,8 @@ Arm.prototype = (function() {
 	// all from behind of arm
 	var servoBounds = {
 		'pinch': { // maybe change all to lower, upper -- then can set position of all automatically using an obj
-			low: 90, // open
-			high: 10 // closed
+			low: 180, // open
+			high: 96 // closed
 		},
 		'roll': { // palm facing (side with servo)
 			low: 180, // left
@@ -58,9 +58,9 @@ Arm.prototype = (function() {
 		'shoulderLeft': {
 			low: 0, // back
 			high: 180 // forward
-		},	
+		},
 		'shoulderRight': { // relative to shoulder
-			low: 180, // back 
+			low: 180, // back
 			high: 0 // forward
 		},
 		'base': {
@@ -71,7 +71,7 @@ Arm.prototype = (function() {
 
 	arm.init = function() { // initialize state and servos
 		var initState = {
-			'pinch': 0.5, 
+			'pinch': 0.5,
 			'roll': 0.5,
 			'pitch': 0.5,
 			'elbow': 0.5,
@@ -139,11 +139,11 @@ Arm.prototype = (function() {
 	arm.setElbow = function(value) { // 0.0 (down)- 1.0 (up)
 		var bounds = servoBounds['elbow'];
 		this.set('elbow', value, bounds);
-	} 
+	}
 
-	arm.setShoulder = function(value) { // 0.0 (back) - 1.0 (forward) 
+	arm.setShoulder = function(value) { // 0.0 (back) - 1.0 (forward)
 		var leftBounds = servoBounds['shoulderLeft'];
-		var rightBounds = servoBounds['shoulderRight']; 
+		var rightBounds = servoBounds['shoulderRight'];
 		// console.log(value);
 		this.set('shoulderLeft', value, leftBounds);
 		this.set('shoulderRight', value, rightBounds);
@@ -163,8 +163,8 @@ Arm.prototype = (function() {
 		var l2 = this.forearmLength;
 
 		var base = this.calculateRotation(x, z);
-		
-		y = y * (l1 + l2) + 10; // offset
+
+		y = y * (l1 + l2); // offset
 		x = x * (l1 + l2);
 		z = z * (l1 + l2);
 
@@ -172,7 +172,7 @@ Arm.prototype = (function() {
 
 		// var theta_2 = Math.atan2(-Math.sqrt(1 - (Math.pow(Math.pow(distance, 2) + Math.pow(y, 2) - Math.pow(l1, 2) - Math.pow(l2, 2) / (2 * l1 * l2), 2)), ((Math.pow(distance, 2) + Math.pow(y, 2) - Math.pow(l1, 2) - Math.pow(l2, 2)) / (2 * l1 * l2)), 2));
 
-		var a = Math.pow(distance, 2) + Math.pow(y, 2) - Math.pow(l1, 2) - Math.pow(l2, 2); 
+		var a = Math.pow(distance, 2) + Math.pow(y, 2) - Math.pow(l1, 2) - Math.pow(l2, 2);
 		var b = (2 * l1 * l2);
 		var theta_2 = Math.atan2(-Math.sqrt(1 - Math.pow(a / b, 2)), (a / b));
 
@@ -270,4 +270,3 @@ function clamp(n, min, max) {
 function clone(obj) {
 	return JSON.parse(JSON.stringify(obj));
 }
-
