@@ -1,7 +1,7 @@
 var five = require('johnny-five');
 var Leap = require('leapjs');
 
-var fs = require('fs'); 
+var fs = require('fs');
 
 var Arm = require('./arm.js');
 
@@ -49,6 +49,7 @@ function useLeapMotion(arm) {
 	function handleFrame(frame) {
 		if (frame.hands.length > 0 && !Arm.status.playing) {
 
+
 			var hand = frame.hands[0];
 			// var box = frame.interactionBox;
 			// var pos = toCoords(box.normalizePoint(hand.palmPosition, true));
@@ -68,7 +69,7 @@ function useLeapMotion(arm) {
 
 			if (recording) {
 				arm.addHistory();
-			}	
+			}
 			// debug(arm.state['shoulderLeft']+' '+arm.state['shoulderRight']);
 			// document.getElementById('coords').innerHTML = '('+String(pos.x)+', '+String(pos.y)+', '+String(pos.z)+')';
 		}
