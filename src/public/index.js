@@ -34,8 +34,10 @@ Arm.status.blinking = false;
 board.on('ready', function() {
 	var arm = new Arm(this, fps, Arm.status); // todo: remove status var
 	arm.init();
-	useLeapMotion(arm);
+	// useLeapMotion(arm);
 });
+
+
 
 function useLeapMotion(arm) {
 	var controller = new Leap.Controller();
