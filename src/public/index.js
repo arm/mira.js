@@ -1,14 +1,3 @@
-var five = require('johnny-five');
-var Leap = require('leapjs');
-
-var fs = require('fs');
-
-var Arm = require('./arm.js');
-
-var board = new five.Board({
-	repl: false
-});
-
 var leapBounds = {
 	x: {
 		min: -200,
@@ -24,20 +13,7 @@ var leapBounds = {
 	}
 }
 
-var fps = 30;
-
 var recording = false;
-
-Arm.status.playing = false;
-Arm.status.blinking = false;
-
-board.on('ready', function() {
-	var arm = new Arm(this, fps, Arm.status); // todo: remove status var
-	arm.init();
-	// useLeapMotion(arm);
-});
-
-
 
 function useLeapMotion(arm) {
 	var controller = new Leap.Controller();

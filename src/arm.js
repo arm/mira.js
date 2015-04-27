@@ -1,15 +1,12 @@
 var five = require('johnny-five');
 var fs = require('fs');
 
-var status = {};
-
 var Arm = function(board, fps) {
 	this.board = board;
 	this.fps = fps;
 
 	this.state = {};
 	this.lastState = {};
-	this.history = [];
 	// this.lastState = this.state;
 
 	var servoPins = {
@@ -32,6 +29,7 @@ var Arm = function(board, fps) {
 	this.lights = new five.Led(ledsPin);
 	this.forearmLength = 128.86;
 	this.upperArmLength = 140;
+	this.blinking = false; // move blink logic to outside arm obj -- keep blink var
 }
 
 Arm.prototype = (function() {
@@ -91,7 +89,7 @@ Arm.prototype = (function() {
 		var maxStep = 0.001;
 		var last = this.lastState[name];
 		var difference = clamp(value, 0, 1) - last;
-		if (Math.abs(difference) > maxChange && !status.playing) {
+		if (Math.abs(difference) > maxChange) {
 			if (difference >= 0) {
 				value = last + maxStep;
 			}
@@ -184,7 +182,7 @@ Arm.prototype = (function() {
 		var elbow = radToDeg(theta_2);
 
 		if (!isNaN(shoulder)) { // if within range
-			status.blinking = false;
+			this.blinking = false;
 			this.lights.stop();
 			this.setLight(1);
 			this.setBase(base / 180); // maybe later change these to just get angle and set it
@@ -192,33 +190,14 @@ Arm.prototype = (function() {
 			this.setElbow((180 + elbow) / 180);
 		}
 		else { // change to use new state storing
-			if (!status.blinking) {
+			if (!this.blinking) {
 				this.lights.pulse(1000);
 			}
-			status.blinking = true;
+			this.blinking = true;
 			this.setElbow( (180 + this.lastState['elbow']) / 180 );
 		}
 
 		// console.log(shoulder, elbow);
-	}
-
-	arm.playHistory = function() {
-		status.playing = true;
-		var ref = this;
-		for (var i = 0; i < this.history.length; i++) {
-			setTimeout(function(val, end) {
-				console.log(ref.history[val]);
-				ref.toState(ref.history[val]); // if use 'i', then it will use i at the value during call time, which will be history.length
-				status.playing = !end;
-				console.log(i * (1000 / this.fps));
-				// console.log(end);
-			}, i * (1000 / this.fps), i, i >= this.history.length - 1); // playback speed not exact! try to fix this later
-		}
-		// console.log(ref.history);
-	}
-
-	arm.addHistory = function() {
-		this.history.push(clone(this.state));
 	}
 
 	arm.toState = function(positions) {
@@ -237,12 +216,12 @@ Arm.prototype = (function() {
 		return 180 - rotation;
 	}
 
-	arm.playHistoryFromFile = function(filepath) {
-		status.playing = true;
-		var string = fs.readFileSync(filepath, 'utf8');
-		var history = JSON.parse(string);
-		this.history = history;
-		this.playHistory();
+	arm.getState = function() {
+		return clone(this.state);
+	}
+
+	arm.getLastState = function() {
+		return clone(this.lastState);
 	}
 
 	function dist(a, b) {
@@ -261,7 +240,6 @@ Arm.prototype = (function() {
 })();
 
 module.exports = Arm;
-module.exports.status = status;
 
 function clamp(n, min, max) {
 	return Math.min(Math.max(n, min), max);
