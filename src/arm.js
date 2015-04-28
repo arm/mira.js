@@ -1,5 +1,4 @@
 var five = require('johnny-five');
-var fs = require('fs');
 
 var Arm = function(board, fps) {
 	this.board = board;
@@ -182,18 +181,14 @@ Arm.prototype = (function() {
 		var elbow = radToDeg(theta_2);
 
 		if (!isNaN(shoulder)) { // if within range
-			this.blinking = false;
-			this.lights.stop();
+			this.stopBlink();
 			this.setLight(1);
 			this.setBase(base / 180); // maybe later change these to just get angle and set it
 			this.setShoulder(shoulder / 180);
 			this.setElbow((180 + elbow) / 180);
 		}
 		else { // change to use new state storing
-			if (!this.blinking) {
-				this.lights.pulse(1000);
-			}
-			this.blinking = true;
+			this.startBlink();
 			this.setElbow( (180 + this.lastState['elbow']) / 180 );
 		}
 
@@ -222,6 +217,18 @@ Arm.prototype = (function() {
 
 	arm.getLastState = function() {
 		return clone(this.lastState);
+	}
+
+	arm.startBlink = function() {
+		if (!this.blinking) {
+			this.lights.pulse(1000);
+			this.blinking = true;
+		}
+	}
+
+	arm.stopBlink = function() {
+		this.blinking = false;
+		this.lights.stop();
 	}
 
 	function dist(a, b) {

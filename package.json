@@ -18,6 +18,7 @@
   },
   "homepage": "https://github.com/arm/mira.js",
   "dependencies": {
+    "body-parser": "^1.12.3",
     "express": "^4.12.3",
     "johnny-five": "^0.8.52",
     "leapjs": "^0.6.4"

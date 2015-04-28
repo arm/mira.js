@@ -1,43 +1,76 @@
 var express = require('express');
+var bodyParser = require('body-parser');
 var app = express();
 
 var five = require('johnny-five');
 var Arm = require('./arm.js');
 
-var board = new five.Board({
-	repl: false
-});
 
 var fps = 30;
 
 var isReady = false;
 
+var board = new five.Board({
+	repl: false
+});
+
 board.on('ready', function() {
 	arm = new Arm(this, fps); // todo: remove status var
 	arm.init();
-	isReady = true;
 });
 
 app.use(express.static(__dirname+'/public'));
+app.use(bodyParser.urlencoded({     // to support URL-encoded bodies
+  extended: true
+}));
 
-app.get('/arm', function(req, res) { // update later
-	res.json({ready: isReady});
-});
+app.route('/arm')
+	.post(function(req, res) { // update later
+		board = new five.Board({
+			repl: false
+		});
 
-app.post('/arm/from_hand', function(req, res) {
-	var pos = toCoords(hand.palmPosition, leapBounds);
+		board.on('ready', function() {
+			arm = new Arm(this, fps); // todo: remove status var
+			arm.init();
+			res.json({ready: true});
+		});
+	});
 
-	var pinch = hand.pinchStrength;
+app.route('/arm/state')
+	.get(function(req, res) {
+		res.json(arm.getState()); // don't have to use this -- can just store client side
+	})
+	.post(function(req, res) {
+		var parsed = JSON.parse(req.body.data);
+		console.log(parsed);
+		var x = parsed.x;
+		var y = parsed.y;
+		var z = parsed.z;
 
-	var roll = radToDeg(hand.roll()); // -90: facing left, 90: facing right
-	var pitch = radToDeg(hand.pitch()); // -90: down, 90: up
+		var pitch = parsed.pitch;
+		var roll = parsed.roll;
+		var pinch = parsed.pinch;
 
-	arm.setPinch(pinch);
-	arm.setRoll( (roll + 90) / 180 );
-	arm.to(pos.x, pos.y, pos.z);
-	arm.setPitch( (pitch + 90) / 180);
-	arm.commitState();
-});
+		arm.to(x, y, z);
+		arm.setPitch(pitch);
+		arm.setRoll(roll);
+		arm.setPinch(parsed.pinch);
+		arm.commitState();
+
+		res.json({success: true});
+	});
+
+// app.post('arm/light/blink', function(req, res) {
+// 		var blink = req.params.blink;
+// 		if (blink) {
+// 			arm.startBlink();
+// 		}
+// 		else {
+// 			arm.stopBlink();
+// 		}
+// })
+
 
 var server = app.listen(3000, function () {
 

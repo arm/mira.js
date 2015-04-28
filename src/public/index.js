@@ -14,6 +14,11 @@ var leapBounds = {
 }
 
 var recording = false;
+var fps = 30;
+
+window.onload = function() {
+	useLeapMotion();
+}
 
 function useLeapMotion(arm) {
 	var controller = new Leap.Controller();
@@ -25,35 +30,34 @@ function useLeapMotion(arm) {
 	});
 	controller.connect();
 	function handleFrame(frame) {
-		if (frame.hands.length > 0 && !Arm.status.playing) {
-
-
+		if (frame.hands.length > 0) {
 			var hand = frame.hands[0];
 			// var box = frame.interactionBox;
 			// var pos = toCoords(box.normalizePoint(hand.palmPosition, true));
+			var state = {};
 
 			var pos = toCoords(hand.palmPosition, leapBounds);
-
-			var pinch = hand.pinchStrength;
+			state['x'] = pos.x;
+			state['y'] = pos.y;
+			state['z'] = pos.z;
+			state['pinch'] = hand.pinchStrength;
 
 			var roll = radToDeg(hand.roll()); // -90: facing left, 90: facing right
 			var pitch = radToDeg(hand.pitch()); // -90: down, 90: up
 
-			arm.setPinch(pinch);
-			arm.setRoll( (roll + 90) / 180 );
-			arm.to(pos.x, pos.y, pos.z);
-			arm.setPitch( (pitch + 90) / 180);
-			arm.commitState();
+			state['roll'] = (roll + 90) / 180;
+			state['pitch'] = (pitch + 90) / 180;
 
-			if (recording) {
-				arm.addHistory();
-			}
-			// debug(arm.state['shoulderLeft']+' '+arm.state['shoulderRight']);
-			// document.getElementById('coords').innerHTML = '('+String(pos.x)+', '+String(pos.y)+', '+String(pos.z)+')';
+			$.post('arm/state', // todo: remove jqueryy dependency
+			{
+					data: JSON.stringify(state),
+					// data: JSON.stringify({'pinch': state['pinch']})
+				}
+			);
+			console.log(state);
 		}
-		else if (!Arm.status.blinking) {
-			arm.lights.pulse(1000);
-			Arm.status.blinking = true;
+		else {
+			// todo: add back blink feature
 		}
 	}
 
@@ -69,10 +73,6 @@ function toCoords(position, bounds) { // normalizes point with custom bounds
 		y: (clamp(position[1], bounds.y.min, bounds.y.max) - bounds.y.min) / (bounds.y.max - bounds.y.min),
 		z: 1 - (clamp(position[2], bounds.z.min, bounds.z.max) - bounds.z.min) / (bounds.z.max - bounds.z.min),
 	}
-}
-
-function debug(a) {
-	document.getElementById('debug').innerHTML = String(a);
 }
 
 function clamp(n, min, max) {
