@@ -24,6 +24,46 @@ var leapBounds = {
 	}
 }
 
+var stdin = process.stdin;
+
+// without this, we would only get streams once enter is pressed
+stdin.setRawMode( true );
+
+// resume stdin in the parent process (node app won't quit all by itself
+// unless an error or process.exit() happens)
+stdin.resume();
+
+// i don't want binary, do you?
+stdin.setEncoding( 'utf8' );
+
+// on any data into stdin
+stdin.on( 'data', function( key ){
+  // ctrl-c ( end of text )
+  if ( key === ' ') {
+		if (!recording) {
+			arm.history = [];
+    	recording = true;
+		}
+		else {
+			recording = false;
+		}
+  }
+
+	if ( key === '\u0003' ) {
+	    process.exit();
+	  }
+
+
+	if (key === 'p') {
+		if (!Arm.status.playing) {
+			arm.playHistory();
+		}
+	}
+
+  // write the key to stdout all normal like
+
+});
+
 var fps = 30;
 
 var recording = false;
@@ -31,8 +71,10 @@ var recording = false;
 Arm.status.playing = false;
 Arm.status.blinking = false;
 
+var arm;
+
 board.on('ready', function() {
-	var arm = new Arm(this, fps, Arm.status); // todo: remove status var
+	arm = new Arm(this, fps, Arm.status); // todo: remove status var
 	arm.init();
 	useLeapMotion(arm);
 });
