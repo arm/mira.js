@@ -71,15 +71,19 @@ function useLeapMotion(arm) {
 			// var box = frame.interactionBox;
 			// var pos = toCoords(box.normalizePoint(hand.palmPosition, true));
 			var state = {};
-
+			
 			var pos = toCoords(hand.palmPosition, leapBounds);
 			state['x'] = pos.x;
 			state['y'] = pos.y;
 			state['z'] = pos.z;
 			state['pinch'] = hand.pinchStrength;
 
-			// var roll = clamp(radToDeg(hand.roll()) + 30, -90, 90); // -90: facing left, 90: facing right
-			var roll = radToDeg(hand.roll());
+			if (hand.type === 'right') {
+				var roll = clamp(radToDeg(hand.roll()) + 30, -90, 90); // -90: facing left, 90: facing right
+			}
+			else {
+				var roll = clamp(radToDeg(hand.roll()) - 30, -90, 90); // -90: facing left, 90: facing right
+			}
 			var pitch = radToDeg(hand.pitch()); // -90: down, 90: up
 
 			state['roll'] = (roll + 90) / 180;
