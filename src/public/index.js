@@ -38,7 +38,7 @@ function initInterface() {
 	}
 	playButton = document.getElementById('play');
 	playButton.onclick = function() {
-		if (tracking && history.length > 0 && !recording) {
+		if (history.length > 0 && !recording) {
 			playButton.innerHTML = 'playing...';
 			playHistory();
 		}
@@ -71,7 +71,7 @@ function useLeapMotion(arm) {
 			// var box = frame.interactionBox;
 			// var pos = toCoords(box.normalizePoint(hand.palmPosition, true));
 			var state = {};
-			
+
 			var pos = toCoords(hand.palmPosition, leapBounds);
 			state['x'] = pos.x;
 			state['y'] = pos.y;
