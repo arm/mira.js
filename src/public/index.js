@@ -14,10 +14,46 @@ var leapBounds = {
 }
 
 var recording = false;
+var tracking = true;
 var fps = 30;
+var playButton;
 
 window.onload = function() {
+	initInterface();
 	useLeapMotion();
+}
+
+function initInterface() {
+	var recordButton = document.getElementById('record');
+	recordButton.onclick = function() {
+		if (!recording) {
+			recording = true;
+			recordButton.innerHTML = 'stop';
+			history = [];
+		}
+		else {
+			recording = false;
+			recordButton.innerHTML = 'record';
+		}
+	}
+	playButton = document.getElementById('play');
+	playButton.onclick = function() {
+		if (tracking && history.length > 0 && !recording) {
+			playButton.innerHTML = 'playing...';
+			playHistory();
+		}
+	}
+	var trackingButton = document.getElementById('tracking');
+	trackingButton.onclick = function() {
+		if (tracking) {
+			tracking = false;
+			trackingButton.innerHTML = 'resume tracking'
+		}
+		else {
+			tracking = true;
+			trackingButton.innerHTML = 'pause tracking'
+		}
+	}
 }
 
 function useLeapMotion(arm) {
@@ -30,7 +66,7 @@ function useLeapMotion(arm) {
 	});
 	controller.connect();
 	function handleFrame(frame) {
-		if (frame.hands.length > 0) {
+		if (frame.hands.length > 0 && tracking) {
 			var hand = frame.hands[0];
 			// var box = frame.interactionBox;
 			// var pos = toCoords(box.normalizePoint(hand.palmPosition, true));
@@ -48,17 +84,13 @@ function useLeapMotion(arm) {
 			state['roll'] = (roll + 90) / 180;
 			state['pitch'] = (pitch + 90) / 180;
 
-			$.post('arm/state', // todo: remove jqueryy dependency
-			{
-					data: JSON.stringify(state),
-					// data: JSON.stringify({'pinch': state['pinch']})
-				}
-			);
-			console.log(state);
-		}
-		else {
-			// todo: add back blink feature
-		}
+			armToState(state);
+			// console.log(state);
+			if (recording) {
+				history.push(state);
+			}
+		} // maybe add else for blink
+
 	}
 
 	function radToDeg(radians) {
@@ -77,4 +109,33 @@ function toCoords(position, bounds) { // normalizes point with custom bounds
 
 function clamp(n, min, max) {
 	return Math.min(Math.max(n, min), max);
+}
+
+var history =  [];
+
+function playHistory() {
+	tracking = false;
+	for (var i = 0; i < history.length; i++) {
+		setTimeout(function(val, end) {
+			console.log(history[val]);
+			armToState(history[val]); // if use 'i', then it will use i at the value during call time, which will be history.length
+			tracking = end;
+
+			if (tracking) {
+				playButton.innerHTML = 'play';
+			}
+			// console.log(i * (1000 / fps));
+			// console.log(end);
+		}, i * (1000 / fps), i, i >= history.length - 1); // playback speed not exact! try to fix this later
+	}
+	// console.log(ref.history);
+}
+
+function armToState(state) {
+	$.post('arm/state', // todo: remove jqueryy dependency
+	{
+		data: JSON.stringify(state),
+		// data: JSON.stringify({'pinch': state['pinch']})
+	}
+);
 }

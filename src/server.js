@@ -43,7 +43,7 @@ app.route('/arm/state')
 	})
 	.post(function(req, res) {
 		var parsed = JSON.parse(req.body.data);
-		console.log(parsed);
+		// console.log(parsed);
 		var x = parsed.x;
 		var y = parsed.y;
 		var z = parsed.z;
