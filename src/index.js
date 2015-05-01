@@ -42,9 +42,11 @@ stdin.on( 'data', function( key ){
   if ( key === ' ') {
 		if (!recording) {
 			arm.history = [];
+			console.log('recording!');
     	recording = true;
 		}
 		else {
+			console.log('stop!');
 			recording = false;
 		}
   }
@@ -56,6 +58,7 @@ stdin.on( 'data', function( key ){
 
 	if (key === 'p') {
 		if (!Arm.status.playing) {
+			console.log('playing!')
 			arm.playHistory();
 		}
 	}
