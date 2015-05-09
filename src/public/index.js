@@ -94,7 +94,11 @@ function useLeapMotion(arm) {
 			if (recording) {
 				history.push(state);
 			}
-		} // maybe add else for blink
+		}
+		else {
+			armStartBlink();
+		}
+		 // maybe add else for blink
 
 	}
 
@@ -136,11 +140,14 @@ function playHistory() {
 	// console.log(ref.history);
 }
 
+function armStartBlink(state) {
+	$.post('arm/blink/start', {});
+}
+
 function armToState(state) {
 	$.post('arm/state', // todo: remove jqueryy dependency
 	{
 		data: JSON.stringify(state),
 		// data: JSON.stringify({'pinch': state['pinch']})
-	}
-);
+	});
 }

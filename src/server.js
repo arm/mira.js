@@ -21,56 +21,46 @@ board.on('ready', function() {
 
 app.use(express.static(__dirname+'/public'));
 app.use(bodyParser.urlencoded({     // to support URL-encoded bodies
-  extended: true
+	extended: true
 }));
 
 app.route('/arm')
-	.post(function(req, res) { // update later
-		board = new five.Board({
-			repl: false
-		});
-
-		board.on('ready', function() {
-			arm = new Arm(this, fps); // todo: remove status var
-			arm.init();
-			res.json({ready: true});
-		});
+.post(function(req, res) { // update later
+	board = new five.Board({
+		repl: false
 	});
 
-app.route('/arm/state')
-	.get(function(req, res) {
-		res.json(arm.getState()); // don't have to use this -- can just store client side
-	})
-	.post(function(req, res) {
-		var parsed = JSON.parse(req.body.data);
-		// console.log(parsed);
-		var x = parsed.x;
-		var y = parsed.y;
-		var z = parsed.z;
-
-		var pitch = parsed.pitch;
-		var roll = parsed.roll;
-		var pinch = parsed.pinch;
-
-		arm.to(x, y, z);
-		arm.setPitch(pitch);
-		arm.setRoll(roll);
-		arm.setPinch(parsed.pinch);
-		arm.commitState();
-
-		res.json({success: true});
+	board.on('ready', function() {
+		arm = new Arm(this, fps); // todo: remove status var
+		arm.init();
+		res.json({ready: true});
 	});
+});
 
-// app.post('arm/light/blink', function(req, res) {
-// 		var blink = req.params.blink;
-// 		if (blink) {
-// 			arm.startBlink();
-// 		}
-// 		else {
-// 			arm.stopBlink();
-// 		}
-// })
+app.post('/arm/state', function(req, res) {
+	var parsed = JSON.parse(req.body.data);
+	// console.log(parsed);
+	var x = parsed.x;
+	var y = parsed.y;
+	var z = parsed.z;
 
+	var pitch = parsed.pitch;
+	var roll = parsed.roll;
+	var pinch = parsed.pinch;
+
+	arm.to(x, y, z);
+	arm.setPitch(pitch);
+	arm.setRoll(roll);
+	arm.setPinch(parsed.pinch);
+	arm.commitState();
+
+	res.json({success: true});
+});
+
+app.post('/arm/blink/start', function(req, res) {
+	arm.startBlink();
+	res.json({success: true});
+});
 
 var server = app.listen(3000, function () {
 
