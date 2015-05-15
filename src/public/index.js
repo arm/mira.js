@@ -15,6 +15,7 @@ var leapBounds = {
 
 var recording = false;
 var tracking = true;
+var playing = false;
 var fps = 30;
 var playButton;
 
@@ -38,7 +39,7 @@ function initInterface() {
 	}
 	playButton = document.getElementById('play');
 	playButton.onclick = function() {
-		if (history.length > 0 && !recording) {
+		if (history.length > 0 && !recording && !playing) {
 			playButton.innerHTML = 'playing...';
 			playHistory();
 		}
@@ -66,7 +67,7 @@ function useLeapMotion(arm) {
 	});
 	controller.connect();
 	function handleFrame(frame) {
-		if (frame.hands.length > 0 && tracking) {
+		if (frame.hands.length > 0 && tracking && !playing) {
 			var hand = frame.hands[0];
 			// var box = frame.interactionBox;
 			// var pos = toCoords(box.normalizePoint(hand.palmPosition, true));
@@ -123,14 +124,14 @@ function clamp(n, min, max) {
 var history =  [];
 
 function playHistory() {
-	tracking = false;
+	playing = true;
 	for (var i = 0; i < history.length; i++) {
 		setTimeout(function(val, end) {
 			console.log(history[val]);
 			armToState(history[val]); // if use 'i', then it will use i at the value during call time, which will be history.length
-			tracking = end;
+			playing = !end;
 
-			if (tracking) {
+			if (!playing) {
 				playButton.innerHTML = 'play';
 			}
 			// console.log(i * (1000 / fps));
